@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DiscoMod - A Dead as Disco Mod Manager</title>
+  <meta name="description" content="DiscoMod - Manage your game mods and custom songs." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="modal-overlay" id="modal-confirm" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title" id="modal-confirm-title">Confirm</div>
+      <div class="modal-body" id="modal-confirm-body"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="modal-confirm-no">Cancel</button>
+        <button class="modal-btn accent" id="modal-confirm-yes">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-install-mod" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title" id="modal-install-title">Install New Mod</div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Mod Name:</label>
+          <input type="text" class="form-input" id="install-name-input" placeholder="Mod Name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mod Type:</label>
+          <select class="form-select" id="install-type-select">
+            <option value="character" selected>Character</option>
+            <option value="map">Map</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="modal-install-cancel">Cancel</button>
+        <button class="modal-btn accent" id="modal-install-confirm">Install</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-rename" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title">Rename Mod</div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">New name:</label>
+          <input type="text" class="form-input" id="rename-input" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="modal-rename-cancel">Cancel</button>
+        <button class="modal-btn accent" id="modal-rename-confirm">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-song-meta" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title">Song Metadata</div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Song Name:</label>
+          <input type="text" class="form-input" id="meta-song-name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Artist:</label>
+          <input type="text" class="form-input" id="meta-artist" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tempo (BPM):</label>
+          <input type="number" class="form-input" id="meta-tempo" step="0.1" min="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Beat Offset:</label>
+          <input type="number" class="form-input" id="meta-beat-offset" step="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Offset:</label>
+          <input type="number" class="form-input" id="meta-start-offset" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Offset:</label>
+          <input type="number" class="form-input" id="meta-end-offset" step="0.01" />
+        </div>
+        <p class="meta-help">Note: Metadata is required for the game to recognize the song.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="modal-song-meta-cancel">Cancel</button>
+        <button class="modal-btn accent" id="modal-song-meta-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-import-method" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title">Import Song(s) / Shared</div>
+      <div class="modal-body method-modal-body">
+        <p>How would you like to import?</p>
+        <div class="method-buttons">
+          <button class="modal-btn accent full-btn" id="import-method-file">Import File (Audio/ZIP)</button>
+          <button class="modal-btn full-btn" id="import-method-folder">Import Folder</button>
+          <button class="modal-btn full-btn" id="import-method-shared">Import Shared Package (.zip)</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="import-method-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-mod-import-method" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title">Add Mod(s)</div>
+      <div class="modal-body method-modal-body">
+        <p>How would you like to add mods?</p>
+        <div class="method-buttons">
+          <button class="modal-btn accent full-btn" id="mod-method-file">Import Mod File(s) (.zip)</button>
+          <button class="modal-btn full-btn" id="mod-method-folder">Import Mod Folder</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="mod-method-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-update" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title">Update Available</div>
+      <div class="modal-body">
+        <p id="modal-update-msg"></p>
+        <div class="changelog-box" id="modal-update-changelog"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="modal-update-later">Later</button>
+        <button class="modal-btn accent" id="modal-update-now">Update Now</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-downloader" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal modal-wide">
+      <div class="modal-title">Song Downloader</div>
+      <div class="modal-body downloader-body">
+        <div class="search-bar">
+          <input type="text" id="dl-search" class="search-input" placeholder="Search song title or artist..." />
+          <button class="modal-btn accent" id="dl-fetch-btn">Refresh Catalogue</button>
+        </div>
+        <div id="dl-catalogue" class="dl-catalogue">
+          <div class="dl-placeholder">Click 'Refresh' to fetch the latest songs.</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <span class="meta-help meta-help-footer">Catalogue provided by <a href="#" class="meta-link" onclick="window.__TAURI__.shell.open('https://discomaps.com')">Discomaps.com</a></span>
+        <button class="modal-btn" id="modal-downloader-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-nexus" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal modal-wide">
+      <div class="modal-title">Nexus Mod Browser</div>
+      <div class="modal-body downloader-body">
+        <div class="search-bar">
+          <input type="text" id="nexus-search" class="search-input" placeholder="Search trending/recent mods..." />
+          <button class="modal-btn accent" id="nexus-search-btn">Search</button>
+        </div>
+        <div id="nexus-catalogue" class="dl-catalogue">
+          <div class="dl-placeholder">Search for mods to browse Nexus.</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <span class="meta-help meta-help-footer">Powered by <a href="#" class="meta-link" style="color:#da8e35;" onclick="window.__TAURI__.shell.open('https://nexusmods.com/deadasdisco')">Nexus Mods</a></span>
+        <button class="modal-btn" id="modal-nexus-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-loading" aria-hidden="true">
+    <div class="modal loading-modal">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-text">Loading...</div>
+    </div>
+  </div>
+
+  <div id="title-bar" data-tauri-drag-region>
+    <div id="title-bar-left" data-tauri-drag-region>
+      <span id="title-bar-text" data-tauri-drag-region>DISCOMOD</span>
+    </div>
+    <div id="title-bar-center" data-tauri-drag-region></div>
+    <div id="title-bar-right">
+      <button id="btn-check-updates" class="title-action-btn" title="Check for updates">Updates</button>
+      <div class="window-controls">
+        <button class="window-btn" id="btn-minimize" title="Minimize">
+          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="0" y="5" width="10" height="1" fill="currentColor"/></svg>
+        </button>
+        <button class="window-btn" id="btn-maximize" title="Maximize">
+          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+        </button>
+        <button class="window-btn close-btn" id="btn-close" title="Close">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1,1 L9,9 M9,1 L1,9" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-root">
+    <aside id="sidebar">
+      <div id="sidebar-brand">
+        <div class="brand-title">DISCOMOD</div>
+        <div class="brand-sub" id="sidebar-sub">v0.0.0 // Loading...</div>
+      </div>
+
+      <div class="sidebar-section-label">Categories</div>
+      <nav id="sidebar-nav">
+        <button class="nav-btn active" id="nav-mods-btn" data-page="mods">Mods</button>
+        <button class="nav-btn" id="nav-songs-btn" data-page="songs">Songs</button>
+        <button class="nav-btn" id="nav-settings-btn" data-page="settings">Settings</button>
+      </nav>
+
+      <div class="sidebar-section-label" id="nav-actions-lbl">Actions</div>
+      <div id="actions-mods" class="sidebar-actions">
+        <button class="action-btn accent" id="btn-apply">Apply Changes</button>
+        <button class="action-btn" id="btn-refresh-mods">Refresh</button>
+        <button class="action-btn" id="btn-add-mod">Add Mod(s)</button>
+        <button class="action-btn" id="btn-export-mods">Export Mods</button>
+        <button class="action-btn orange-outline" id="btn-browse-nexus">Browse Nexus</button>
+      </div>
+
+      <div id="actions-songs" class="sidebar-actions" style="display: none;">
+        <button class="action-btn" id="btn-refresh-songs">Refresh</button>
+        <button class="action-btn accent" id="btn-import-song">Import Song(s)/Shared</button>
+        <button class="action-btn" id="btn-export-shared">Export Songs</button>
+        <button class="action-btn purple-outline" id="btn-download-songs">Download Songs</button>
+      </div>
+
+      <div class="sidebar-spacer"></div>
+
+      <a href="#" class="sidebar-footer-link" onclick="window.__TAURI__.shell.open('https://discomaps.com?tab=supporter')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Support Discomaps
+      </a>
+
+      <button class="launch-btn" id="btn-launch">Launch Game</button>
+    </aside>
+
+    <main id="main-content">
+      <div id="pages-container">
+        <div id="page-mods" class="page active">
+          <div class="page-header">
+            <div class="page-title">Available Mods</div>
+            <div class="search-bar">
+              <input type="text" id="mods-search" class="search-input" placeholder="Search mods..." />
+              <select id="mods-sort" class="sort-select" title="Sort mods by">
+                <option value="name">Name</option>
+                <option value="date" selected>Date Added</option>
+                <option value="type">Type</option>
+              </select>
+              <select id="mods-status-filter" class="sort-select" title="Filter mods by status">
+                <option value="all">All Status</option>
+                <option value="enabled">Enabled</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </div>
+            <div class="mod-list-header">
+              <span class="col-name">Mod Name</span>
+              <span class="col-type">Type</span>
+              <span class="col-edit">Edit</span>
+              <span class="col-del">Delete</span>
+              <span class="col-toggle">Active</span>
+            </div>
+          </div>
+          <div id="mods-list" class="item-list"></div>
+          <div id="mods-empty" class="empty-state">
+            <p>No mods found. Add some to get started!</p>
+          </div>
+        </div>
+
+        <div id="page-songs" class="page">
+          <div class="page-header">
+            <div class="page-title">Songs</div>
+            <div class="search-bar">
+              <input type="text" id="songs-search" class="search-input" placeholder="Search songs..." />
+              <select id="songs-sort" class="sort-select" title="Sort songs by">
+                <option value="name">Name</option>
+                <option value="date" selected>Date Added</option>
+              </select>
+            </div>
+          </div>
+          <div id="songs-list" class="item-list"></div>
+          <div id="songs-empty" class="empty-state">
+          <p id="songs-placeholder-text">No custom songs found. Import some to get started!</p>
+          </div>
+        </div>
+
+        <div id="page-settings" class="page">
+          <div class="page-header">
+            <div class="page-title">General Settings</div>
+          </div>
+          
+          <div class="settings-grid">
+            <section class="settings-section">
+              <div class="settings-section-title">Paths & Storage</div>
+              <div class="form-group">
+                <label class="form-label">Game Executable</label>
+                <div class="api-key-row">
+                  <input type="text" id="exe-input" class="form-input" readonly placeholder="Select Pagoda.exe..." />
+                  <button class="modal-btn" id="exe-browse-btn">Browse</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mods Storage Folder</label>
+                <div class="api-key-row">
+                  <input type="text" id="storage-input" class="form-input" readonly placeholder="Select mods storage folder..." />
+                  <button class="modal-btn" id="storage-browse-btn">Browse</button>
+                </div>
+                <p class="meta-help">Note: Storage folder must be outside the game directory.</p>
+              </div>
+            </section>
+
+            <section class="settings-section">
+              <div class="settings-section-title">Disco Maps</div>
+              <div class="form-group">
+                <label class="form-label">Disco Maps API Key</label>
+                <div class="api-key-row">
+                  <input type="password" id="dl-api-key-input" class="form-input" placeholder="Enter Disco Maps API Key..." />
+                  <button class="modal-btn" id="btn-toggle-api-key">Show</button>
+                  <button class="modal-btn accent" id="dl-save-key-btn">Save Key</button>
+                </div>
+                <p class="meta-help">Required for fetching the song catalogue. Get yours at <a href="#" class="meta-link" onclick="window.__TAURI__.shell.open('https://discomaps.com/?tab=user')">discomaps.com</a></p>
+              </div>
+            </section>
+
+            <section class="settings-section">
+              <div class="settings-section-title">Appearance</div>
+              <div class="form-group">
+                <label class="form-label">Theme</label>
+                <select id="theme-select" class="form-select" title="Choose application theme">
+                  <optgroup label="Dark Themes">
+                    <option value="dark">Midnight (Default)</option>
+                    <option value="green">Forest Green</option>
+                    <option value="red">Crimson Red</option>
+                    <option value="blue">Deep Blue</option>
+                    <option value="purple">Amethyst Purple</option>
+                    <option value="orange">Sunset Orange</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="monokai">Monokai</option>
+                  </optgroup>
+                  <optgroup label="Specialty">
+                    <option value="amoled">AMOLED Black</option>
+                    <option value="gray">Slate Gray</option>
+                    <option value="neon">Neon Night</option>
+                    <option value="nordic">Nordic Frost</option>
+                    <option value="matrix">The Matrix</option>
+                    <option value="coffee">Coffee House</option>
+                  </optgroup>
+                  <optgroup label="Light Themes">
+                    <option value="light">Pure Light</option>
+                    <option value="arctic">Arctic Blue</option>
+                    <option value="rose">Rose Pine</option>
+                    <option value="solarized">Solarized Warm</option>
+                    <option value="matcha">Matcha Tea</option>
+                    <option value="lavender">Lavender Mist</option>
+                  </optgroup>
+                </select>
+              </div>
+            </section>
+
+            <section class="settings-section">
+              <div class="settings-section-title">Nexus Mods</div>
+              <div class="form-group">
+                <label class="form-label">Nexus API Key</label>
+                <div class="api-key-row">
+                  <input type="password" id="nexus-api-key-input" class="form-input" placeholder="Enter Nexus Personal API Key..." />
+                  <button class="modal-btn" id="btn-toggle-nexus-key">Show</button>
+                  <button class="modal-btn accent" id="nexus-save-key-btn">Save Key</button>
+                </div>
+                <p class="meta-help">Required for browsing and downloading mods. Get yours at <a href="#" class="meta-link" onclick="window.__TAURI__.shell.open('https://www.nexusmods.com/settings/api-keys')">nexusmods.com</a></p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="status-bar" class="status-bar"></div>
+  <div id="toast-container"></div>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

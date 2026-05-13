@@ -1,0 +1,33 @@
+{
+  "name": "discomod",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A Mod Manager for Dead as Disco",
+  "bugs": {
+    "url": "https://github.com/thororen1234/DiscoMod/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thororen1234/DiscoMod.git"
+  },
+  "license": "GPL-3.0-or-later",
+  "author": "thororen1234",
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "test": "cargo test",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-http": "^2.5.9",
+    "@tauri-apps/plugin-opener": "^2.5.4",
+    "@tauri-apps/plugin-shell": "^2.3.5"
+  }
+}
