@@ -2,6 +2,7 @@
 const { invoke } = window.__TAURI__.core;
 const { open: openDialog, message, ask, confirm } = window.__TAURI__.dialog;
 const { getCurrentWindow } = window.__TAURI__.window;
+const { check: checkUpdate } = window.__TAURI__.updater;
 let config = {};
 let availableMods = [];
 let availableSongs = [];
@@ -22,8 +23,8 @@ const formatSize = (bytes) => {
 async function init() {
   await setupWindowControls();
   await loadConfig();
-  
-  
+
+
   try {
     if (window.__TAURI__?.app) {
       const version = await window.__TAURI__.app.getVersion();
@@ -66,7 +67,7 @@ function showToast(msg, type = 'info') {
 function setStatus(text, error = false) {
   const el = $('status-bar');
   if (!el) return;
-  
+
   if (!text || text.includes("System ready")) {
     el.classList.remove('active');
     return;
@@ -90,7 +91,7 @@ function closeModal(id) {
 
 async function setupWindowControls() {
   const appWindow = getCurrentWindow();
-  
+
   const setupBtn = (id, action) => {
     const el = $(id);
     if (el) el.addEventListener('click', action);
@@ -106,7 +107,7 @@ async function loadConfig() {
     config = await invoke('load_config');
     $('exe-input').value = config.exePath || '';
     $('storage-input').value = config.modsStoragePath || '';
-    
+
     if (config.discomapsApiKey) $('dl-api-key-input').value = config.discomapsApiKey;
     if (config.nexusApiKey) $('nexus-api-key-input').value = config.nexusApiKey;
     if (config.theme) {
@@ -135,10 +136,10 @@ function setupNavigation() {
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const targetPage = btn.dataset.page;
-      
+
       navBtns.forEach(b => b.classList.toggle('active', b === btn));
       pages.forEach(p => p.classList.toggle('active', p.id === `page-${targetPage}`));
-      
+
       actionBars.forEach(bar => {
         bar.style.display = bar.id === `actions-${targetPage}` ? 'flex' : 'none';
       });
@@ -171,18 +172,18 @@ function renderMods() {
   const searchTerm = ($('mods-search')?.value || '').toLowerCase();
   const sortBy = $('mods-sort')?.value || 'date';
   const statusFilter = $('mods-status-filter')?.value || 'all';
-  
+
   container.innerHTML = '';
-  
+
   let filtered = availableMods.filter(mod => {
-    const matchesSearch = mod.name.toLowerCase().includes(searchTerm) || 
-                          mod.folderName.toLowerCase().includes(searchTerm) ||
-                          (mod.type && mod.type.toLowerCase().includes(searchTerm));
-    
-    const matchesStatus = statusFilter === 'all' || 
-                          (statusFilter === 'enabled' && mod.enabled) ||
-                          (statusFilter === 'disabled' && !mod.enabled);
-    
+    const matchesSearch = mod.name.toLowerCase().includes(searchTerm) ||
+      mod.folderName.toLowerCase().includes(searchTerm) ||
+      (mod.type && mod.type.toLowerCase().includes(searchTerm));
+
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'enabled' && mod.enabled) ||
+      (statusFilter === 'disabled' && !mod.enabled);
+
     return matchesSearch && matchesStatus;
   });
 
@@ -197,9 +198,9 @@ function renderMods() {
     emptyState.innerHTML = searchTerm ? `<p>No mods matching "${searchTerm}"</p>` : `<p>No mods found. Add some to get started!</p>`;
     return;
   }
-  
+
   emptyState.style.display = 'none';
-  
+
   filtered.forEach((mod) => {
     const modEl = document.createElement('div');
     modEl.className = `mod-item ${mod.enabled ? 'active-mod' : ''}`;
@@ -236,7 +237,7 @@ function renderMods() {
       const folderName = e.target.dataset.id;
       const mod = availableMods.find(m => m.folderName === folderName);
       if (mod) mod.enabled = e.target.checked;
-      renderMods(); 
+      renderMods();
     });
   });
 
@@ -283,11 +284,11 @@ function setupModsEvents() {
   $('mods-search').addEventListener('input', renderMods);
   $('mods-sort').addEventListener('change', renderMods);
   $('mods-status-filter').addEventListener('change', renderMods);
-  
+
   $('btn-apply').addEventListener('click', async () => {
     setStatus('● ' + "Syncing mods...");
     const activeMods = availableMods.filter(m => m.enabled).map(m => m.folderName);
-    
+
     let characters = 0;
     let maps = 0;
     availableMods.filter(m => m.enabled).forEach(m => {
@@ -320,12 +321,12 @@ function setupModsEvents() {
   $('mod-method-file').addEventListener('click', async () => {
     closeModal('modal-mod-import-method');
     if (!config.modsStoragePath) return showToast("Select storage folder", 'error');
-    
+
     const files = await openDialog({
       multiple: true,
       filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
     });
-    
+
     if (files && files.length === 1) {
       const file = files[0];
       let defaultName = file.split(/[\\/]/).pop().replace('.zip', '');
@@ -355,7 +356,7 @@ function setupModsEvents() {
   $('mod-method-folder').addEventListener('click', async () => {
     closeModal('modal-mod-import-method');
     if (!config.modsStoragePath) return showToast("Select storage folder", 'error');
-    
+
     const folder = await openDialog({ directory: true });
     if (folder) {
       const modName = folder.split(/[\\/]/).pop();
@@ -377,12 +378,12 @@ function setupModsEvents() {
 
   $('btn-export-mods').addEventListener('click', async () => {
     if (availableMods.length === 0) return showToast("No mods to export.", 'info');
-    
+
     const savePath = await window.__TAURI__.dialog.save({
       filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
       defaultPath: "My_Mods_Export.zip"
     });
-    
+
     if (savePath) {
       try {
         showModal('modal-loading');
@@ -390,7 +391,7 @@ function setupModsEvents() {
         await invoke('export_mods', { names: folderNames, path: savePath });
         closeModal('modal-loading');
         showToast("Mods exported successfully!", 'success');
-      } catch(err) {
+      } catch (err) {
         closeModal('modal-loading');
         showToast(`Export error: ${err}`, 'error');
       }
@@ -423,11 +424,11 @@ function renderSongs() {
   const emptyState = $('songs-empty');
   const searchTerm = ($('songs-search')?.value || '').toLowerCase();
   const sortBy = $('songs-sort')?.value || 'date';
-  
+
   container.innerHTML = '';
-  
-  let filtered = availableSongs.filter(song => 
-    song.songName.toLowerCase().includes(searchTerm) || 
+
+  let filtered = availableSongs.filter(song =>
+    song.songName.toLowerCase().includes(searchTerm) ||
     (Array.isArray(song.performedBy) && song.performedBy.some(p => p.toLowerCase().includes(searchTerm)))
   );
 
@@ -441,14 +442,14 @@ function renderSongs() {
     emptyState.innerHTML = searchTerm ? `<p>No songs matching "${searchTerm}"</p>` : `<p id="songs-placeholder-text">No custom songs found. Import some to get started!</p>`;
     return;
   }
-  
+
   emptyState.style.display = 'none';
-  
+
   filtered.forEach((song) => {
     const songEl = document.createElement('div');
     songEl.className = 'song-item';
     songEl.title = `Added: ${formatDate(song.createdAt)}`;
-    
+
     const artist = Array.isArray(song.performedBy) ? song.performedBy.join(', ') : 'Unknown';
     const isPlaying = currentPlayingPath === song.folderPath;
     const playIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>`;
@@ -479,7 +480,7 @@ function renderSongs() {
         try {
           const cleanPath = path.replace(/\\/g, '/');
           const fullPath = cleanPath.endsWith('/') ? cleanPath + 'Audio.ogg' : cleanPath + '/Audio.ogg';
-          
+
           let audioUrl = "";
           try {
             audioUrl = window.__TAURI__.core.convertFileSrc(fullPath);
@@ -526,7 +527,7 @@ function renderSongs() {
     el.addEventListener('click', (e) => {
       const path = e.currentTarget.dataset.path;
       const song = availableSongs.find(s => s.folderPath === path);
-      
+
       $('meta-song-name').value = song.songName || '';
       $('meta-artist').value = Array.isArray(song.performedBy) ? song.performedBy.join(', ') : '';
       $('meta-tempo').value = song.tempo || 120;
@@ -534,7 +535,7 @@ function renderSongs() {
       $('meta-start-offset').value = song.startSongOffset || 0;
       $('meta-end-offset').value = song.endSongOffset || 0;
       $('modal-song-meta-confirm').dataset.path = path;
-      
+
       showModal('modal-song-meta');
     });
   });
@@ -544,7 +545,7 @@ function setupSongsEvents() {
   $('btn-refresh-songs').addEventListener('click', refreshSongs);
   $('songs-search').addEventListener('input', renderSongs);
   $('songs-sort').addEventListener('change', renderSongs);
-  
+
   $('btn-import-song').addEventListener('click', () => {
     showModal('modal-import-method');
   });
@@ -586,12 +587,12 @@ function setupSongsEvents() {
       try {
         setStatus('● ' + `Importing ${files.length} file(s)...`);
         showModal('modal-loading');
-        
+
         for (const file of files) {
           const res = await invoke('import_song', { path: file, customMetadata: null });
           showToast(res, 'success');
         }
-        
+
         closeModal('modal-loading');
         refreshSongs();
         setStatus('● ' + "System ready");
@@ -625,12 +626,12 @@ function setupSongsEvents() {
 
   $('btn-export-shared').addEventListener('click', async () => {
     if (availableSongs.length === 0) return showToast("No songs to export.", 'info');
-    
+
     const savePath = await window.__TAURI__.dialog.save({
       filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
       defaultPath: "My_Custom_Songs.zip"
     });
-    
+
     if (savePath) {
       try {
         showModal('modal-loading');
@@ -638,7 +639,7 @@ function setupSongsEvents() {
         await invoke('export_songs', { paths, path: savePath });
         closeModal('modal-loading');
         showToast("Songs exported successfully!", 'success');
-      } catch(err) {
+      } catch (err) {
         closeModal('modal-loading');
         showToast(`Export error: ${err}`, 'error');
       }
@@ -761,12 +762,12 @@ function setupModals() {
     const archivePath = $('install-name-input').dataset.archivePath;
     const modName = $('install-name-input').value;
     const modType = $('install-type-select').value;
-    
+
     if (!archivePath || !modName) return;
-    
+
     closeModal('modal-install-mod');
     showModal('modal-loading');
-    
+
     try {
       await invoke('install_mod', { archivePath, modName, modType });
       closeModal('modal-loading');
@@ -783,7 +784,7 @@ function setupModals() {
     const newName = $('rename-input').value;
     const oldName = $('rename-input').dataset.oldName;
     if (!newName || newName === oldName) return closeModal('modal-rename');
-    
+
     try {
       const ok = await invoke('rename_mod', { oldName, newName });
       if (ok) {
@@ -792,7 +793,7 @@ function setupModals() {
       } else {
         showToast("Rename failed", 'error');
       }
-    } catch(err) {
+    } catch (err) {
       showToast(`Error: ${err}`, 'error');
     }
     closeModal('modal-rename');
@@ -814,7 +815,7 @@ function setupModals() {
       await invoke('update_song_metadata', { folderPath: path, metadata });
       showToast("Metadata updated", 'success');
       refreshSongs();
-    } catch(err) {
+    } catch (err) {
       showToast(`Update failed: ${err}`, 'error');
     }
     closeModal('modal-song-meta');
@@ -823,14 +824,14 @@ function setupModals() {
   $('import-method-cancel').addEventListener('click', () => closeModal('modal-import-method'));
 
   $('modal-downloader-close').addEventListener('click', () => closeModal('modal-downloader'));
-  
+
 
 
   let catalogue = [];
   $('dl-fetch-btn').addEventListener('click', async () => {
     const apiKey = $('dl-api-key-input').value || config.discomapsApiKey;
     if (!apiKey) return showToast("API Key is missing! Go to Settings to add one.", 'error');
-    
+
     $('dl-fetch-btn').disabled = true;
     $('dl-catalogue').innerHTML = `<div class="dl-placeholder">Loading catalogue...</div>`;
     try {
@@ -841,10 +842,10 @@ function setupModals() {
     } finally {
       $('dl-fetch-btn').disabled = false;
     }
-  });$('dl-search').addEventListener('input', (e) => {
+  }); $('dl-search').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
-    const filtered = catalogue.filter(s => 
-      (s.t && s.t.toLowerCase().includes(term)) || 
+    const filtered = catalogue.filter(s =>
+      (s.t && s.t.toLowerCase().includes(term)) ||
       (s.a && s.a.toLowerCase().includes(term))
     );
     renderCatalogue(filtered);
@@ -858,30 +859,30 @@ function renderCatalogue(maps) {
     container.innerHTML = `<div class="dl-placeholder">No songs found.</div>`;
     return;
   }
-  
+
   maps.forEach(m => {
     const el = document.createElement('div');
     el.className = 'dl-item';
-    
+
     const info = document.createElement('div');
     info.className = 'dl-info';
-    
+
     const title = document.createElement('div');
     title.className = 'dl-title';
     title.innerText = m.t || 'Unknown Title';
-    
+
     const artist = document.createElement('div');
     artist.className = 'dl-artist';
     artist.innerText = m.a || 'Unknown Artist';
-    
+
     const bpm = document.createElement('div');
     bpm.className = 'dl-bpm';
     bpm.innerText = `${m.b || 120} BPM`;
-    
+
     info.appendChild(title);
     info.appendChild(artist);
     info.appendChild(bpm);
-    
+
     const btn = document.createElement('button');
     btn.className = 'dl-btn btn-dl-song';
     btn.innerText = 'Download';
@@ -898,40 +899,74 @@ function renderCatalogue(maps) {
         showToast(`Download error: ${err}`, 'error');
       }
     };
-    
+
     el.appendChild(info);
     el.appendChild(btn);
     container.appendChild(el);
   });
 }
 
-let updateData = null;
+let updateManifest = null;
 
 async function checkUpdates(silent = false) {
   try {
-    const data = await invoke('check_for_updates');
-    if (data.isNewer) {
-      updateData = data;
+    const update = await checkUpdate();
+    if (update) {
+      updateManifest = update;
       const btn = $('btn-check-updates');
-      btn.innerText = "Update Now";
-      btn.classList.add('update-ready');
+      if (btn) {
+        btn.innerText = "Update Now";
+        btn.classList.add('update-ready');
+      }
       if (!silent) showUpdateModal();
     } else if (!silent) {
       showToast("You are already using the latest version.", 'info');
     }
   } catch (err) {
+    console.error("Update check failed:", err);
     if (!silent) showToast(`Update check failed: ${err}`, 'error');
   }
 }
 
 function showUpdateModal() {
-  if (!updateData) return;
-  $('modal-update-msg').innerText = `A new version (${updateData.latestVersion}) is available.`;
-  $('modal-update-changelog').innerText = updateData.changelog;
-  $('modal-update-now').onclick = () => {
-    window.__TAURI__.shell.open(updateData.htmlUrl);
-    closeModal('modal-update');
+  if (!updateManifest) return;
+
+  $('modal-update-msg').innerText = `A new version (${updateManifest.version}) is available.`;
+  $('modal-update-changelog').innerText = updateManifest.body || "No changelog provided.";
+
+  $('modal-update-now').onclick = async () => {
+    try {
+      $('modal-update-now').disabled = true;
+      $('modal-update-now').innerText = "Downloading...";
+
+      let downloaded = 0;
+      let contentLength = 0;
+
+      await updateManifest.downloadAndInstall((event) => {
+        switch (event.event) {
+          case 'Started':
+            contentLength = event.data.contentLength;
+            console.log(`started downloading ${contentLength} bytes`);
+            break;
+          case 'Progress':
+            downloaded += event.data.chunkLength;
+            console.log(`downloaded ${downloaded} from ${contentLength}`);
+            break;
+          case 'Finished':
+            console.log('download finished');
+            break;
+        }
+      });
+
+      showToast("Update installed! Restarting...", 'success');
+    } catch (err) {
+      console.error("Update failed:", err);
+      showToast(`Update failed: ${err}`, 'error');
+      $('modal-update-now').disabled = false;
+      $('modal-update-now').innerText = "Try Again";
+    }
   };
+
   $('modal-update-later').onclick = () => closeModal('modal-update');
   showModal('modal-update');
 }
@@ -952,9 +987,9 @@ async function refreshNexusMods() {
   container.innerHTML = '<div class="dl-placeholder">Searching Nexus...</div>';
 
   try {
-    const mods = await invoke('fetch_nexus_mods', { 
-      apiKey: config.nexusApiKey || '', 
-      query 
+    const mods = await invoke('fetch_nexus_mods', {
+      apiKey: config.nexusApiKey || '',
+      query
     });
     renderNexusMods(mods);
   } catch (err) {
@@ -974,7 +1009,7 @@ function renderNexusMods(mods) {
   mods.forEach(m => {
     const el = document.createElement('div');
     el.className = 'dl-item';
-    
+
     const info = document.createElement('div');
     info.className = 'dl-info';
     info.innerHTML = `

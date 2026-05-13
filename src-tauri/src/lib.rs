@@ -1,6 +1,5 @@
 mod mod_manager;
 mod songs;
-mod updater;
 mod utils;
 mod nexus;
 
@@ -12,6 +11,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_updater::init())
         .invoke_handler(tauri::generate_handler![
             mod_manager::load_config,
             mod_manager::save_config,
@@ -36,7 +36,6 @@ pub fn run() {
             songs::import_shared_package,
             songs::fetch_song_catalogue,
             songs::download_song,
-            updater::check_for_updates,
             nexus::fetch_nexus_mods,
             nexus::download_nexus_mod,
         ])
