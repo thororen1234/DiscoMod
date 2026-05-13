@@ -114,6 +114,9 @@ async function loadConfig() {
       document.documentElement.setAttribute('data-theme', config.theme);
       $('theme-select').value = config.theme;
     }
+    if (config.modsSort) $('mods-sort').value = config.modsSort;
+    if (config.modsStatusFilter) $('mods-status-filter').value = config.modsStatusFilter;
+    if (config.songsSort) $('songs-sort').value = config.songsSort;
   } catch (err) {
     console.error("Failed to load config:", err);
   }
@@ -170,7 +173,7 @@ function renderMods() {
   const container = $('mods-list');
   const emptyState = $('mods-empty');
   const searchTerm = ($('mods-search')?.value || '').toLowerCase();
-  const sortBy = $('mods-sort')?.value || 'date';
+  const sortBy = $('mods-sort')?.value || 'name';
   const statusFilter = $('mods-status-filter')?.value || 'all';
 
   container.innerHTML = '';
@@ -282,8 +285,16 @@ function renderMods() {
 function setupModsEvents() {
   $('btn-refresh-mods').addEventListener('click', refreshMods);
   $('mods-search').addEventListener('input', renderMods);
-  $('mods-sort').addEventListener('change', renderMods);
-  $('mods-status-filter').addEventListener('change', renderMods);
+  $('mods-sort').addEventListener('change', () => {
+    config.modsSort = $('mods-sort').value;
+    saveConfig();
+    renderMods();
+  });
+  $('mods-status-filter').addEventListener('change', () => {
+    config.modsStatusFilter = $('mods-status-filter').value;
+    saveConfig();
+    renderMods();
+  });
 
   $('btn-apply').addEventListener('click', async () => {
     setStatus('● ' + "Syncing mods...");
@@ -340,9 +351,9 @@ function setupModsEvents() {
         for (const file of files) {
           const modName = file.split(/[\\/]/).pop().replace('.zip', '');
           await invoke('install_mod', { archivePath: file, modName, modType: "character" });
-          showToast(`Installed mod ${modName}`, 'success');
         }
         closeModal('modal-loading');
+        showToast(`Successfully installed ${files.length} mods`, 'success');
         refreshMods();
         setStatus('● ' + "System ready");
       } catch (err) {
@@ -423,7 +434,7 @@ function renderSongs() {
   const container = $('songs-list');
   const emptyState = $('songs-empty');
   const searchTerm = ($('songs-search')?.value || '').toLowerCase();
-  const sortBy = $('songs-sort')?.value || 'date';
+  const sortBy = $('songs-sort')?.value || 'name';
 
   container.innerHTML = '';
 
@@ -544,38 +555,15 @@ function renderSongs() {
 function setupSongsEvents() {
   $('btn-refresh-songs').addEventListener('click', refreshSongs);
   $('songs-search').addEventListener('input', renderSongs);
-  $('songs-sort').addEventListener('change', renderSongs);
+  $('songs-sort').addEventListener('change', () => {
+    config.songsSort = $('songs-sort').value;
+    saveConfig();
+    renderSongs();
+  });
 
   $('btn-import-song').addEventListener('click', () => {
     showModal('modal-import-method');
   });
-
-  const importSharedFn = async () => {
-    closeModal('modal-import-method');
-    const files = await openDialog({
-      multiple: true,
-      filters: [{ name: 'ZIP Package', extensions: ['zip'] }]
-    });
-    if (files && files.length > 0) {
-      try {
-        setStatus('● ' + `Importing ${files.length} shared package(s)...`);
-        showModal('modal-loading');
-        for (const file of files) {
-          const res = await invoke('import_shared_package', { zipPath: file, strategies: {} });
-          showToast(res, 'success');
-        }
-        closeModal('modal-loading');
-        refreshSongs();
-        setStatus('● ' + "System ready");
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Import failed: ${err}`, 'error');
-        setStatus('● ' + "Sync error", true);
-      }
-    }
-  };
-
-  $('import-method-shared').addEventListener('click', importSharedFn);
 
   $('import-method-file').addEventListener('click', async () => {
     closeModal('modal-import-method');
@@ -585,15 +573,20 @@ function setupSongsEvents() {
     });
     if (files && files.length > 0) {
       try {
-        setStatus('● ' + `Importing ${files.length} file(s)...`);
+        setStatus('● ' + `Importing ${files.length} item(s)...`);
         showModal('modal-loading');
 
         for (const file of files) {
-          const res = await invoke('import_song', { path: file, customMetadata: null });
-          showToast(res, 'success');
+          const lower = file.toLowerCase();
+          if (lower.endsWith('.zip')) {
+            await invoke('import_shared_package', { zipPath: file, strategies: {} });
+          } else {
+            await invoke('import_song', { path: file, customMetadata: null });
+          }
         }
 
         closeModal('modal-loading');
+        showToast(`Successfully imported ${files.length} items`, 'success');
         refreshSongs();
         setStatus('● ' + "System ready");
       } catch (err) {

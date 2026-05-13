@@ -101,13 +101,12 @@
 
   <div class="modal-overlay" id="modal-import-method" aria-modal="true" role="dialog" aria-hidden="true">
     <div class="modal">
-      <div class="modal-title">Import Song(s) / Shared</div>
+      <div class="modal-title">Import Songs</div>
       <div class="modal-body method-modal-body">
-        <p>How would you like to import?</p>
+        <p>How would you like to import songs?</p>
         <div class="method-buttons">
-          <button class="modal-btn accent full-btn" id="import-method-file">Import File (Audio/ZIP)</button>
-          <button class="modal-btn full-btn" id="import-method-folder">Import Folder</button>
-          <button class="modal-btn full-btn" id="import-method-shared">Import Shared Package (.zip)</button>
+          <button class="modal-btn accent full-btn" id="import-method-file">Import Song ZIPs</button>
+          <button class="modal-btn full-btn" id="import-method-folder">Import Songs Folder</button>
         </div>
       </div>
       <div class="modal-actions">
@@ -118,12 +117,12 @@
 
   <div class="modal-overlay" id="modal-mod-import-method" aria-modal="true" role="dialog" aria-hidden="true">
     <div class="modal">
-      <div class="modal-title">Add Mod(s)</div>
+      <div class="modal-title">Add Mods</div>
       <div class="modal-body method-modal-body">
         <p>How would you like to add mods?</p>
         <div class="method-buttons">
-          <button class="modal-btn accent full-btn" id="mod-method-file">Import Mod File(s) (.zip)</button>
-          <button class="modal-btn full-btn" id="mod-method-folder">Import Mod Folder</button>
+          <button class="modal-btn accent full-btn" id="mod-method-file">Import Mod ZIPs</button>
+          <button class="modal-btn full-btn" id="mod-method-folder">Import Mods Folder</button>
         </div>
       </div>
       <div class="modal-actions">
@@ -230,14 +229,14 @@
       <div id="actions-mods" class="sidebar-actions">
         <button class="action-btn accent" id="btn-apply">Apply Changes</button>
         <button class="action-btn" id="btn-refresh-mods">Refresh</button>
-        <button class="action-btn" id="btn-add-mod">Add Mod(s)</button>
+        <button class="action-btn" id="btn-add-mod">Add Mods</button>
         <button class="action-btn" id="btn-export-mods">Export Mods</button>
         <button class="action-btn orange-outline" id="btn-browse-nexus">Browse Nexus</button>
       </div>
 
       <div id="actions-songs" class="sidebar-actions" style="display: none;">
         <button class="action-btn" id="btn-refresh-songs">Refresh</button>
-        <button class="action-btn accent" id="btn-import-song">Import Song(s)/Shared</button>
+        <button class="action-btn accent" id="btn-import-song">Import Songs</button>
         <button class="action-btn" id="btn-export-shared">Export Songs</button>
         <button class="action-btn purple-outline" id="btn-download-songs">Download Songs</button>
       </div>
@@ -260,8 +259,8 @@
             <div class="search-bar">
               <input type="text" id="mods-search" class="search-input" placeholder="Search mods..." />
               <select id="mods-sort" class="sort-select" title="Sort mods by">
-                <option value="name">Name</option>
-                <option value="date" selected>Date Added</option>
+                <option value="name" selected>Name</option>
+                <option value="date">Date Added</option>
                 <option value="type">Type</option>
               </select>
               <select id="mods-status-filter" class="sort-select" title="Filter mods by status">
@@ -290,8 +289,8 @@
             <div class="search-bar">
               <input type="text" id="songs-search" class="search-input" placeholder="Search songs..." />
               <select id="songs-sort" class="sort-select" title="Sort songs by">
-                <option value="name">Name</option>
-                <option value="date" selected>Date Added</option>
+                <option value="name" selected>Name</option>
+                <option value="date">Date Added</option>
               </select>
             </div>
           </div>
