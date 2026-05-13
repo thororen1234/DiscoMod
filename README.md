@@ -6,9 +6,9 @@ A mod manager for Dead as Disco. Handles installing, toggling, and organizing mo
 
 - Install, rename, and toggle mods
 - Import and preview custom tracks
-- Download beatmaps from DiscoMaps or browse Nexus Mods in-app
-- Automatic ffmpeg setup — nothing extra to install
-- Built with Rust and Tauri, so it's fast
+- Download songs from DiscoMaps or browse Nexus Mods in-app
+- Automatic ffmpeg setup
+- Built with Rust and Tauri
 
 ## Getting Started
 
