@@ -909,21 +909,41 @@ function renderCatalogue(maps) {
 let updateManifest = null;
 
 async function checkUpdates(silent = false) {
+  const btn = $('btn-check-updates');
+  if (btn && !silent) {
+    btn.innerText = "Checking...";
+    btn.disabled = true;
+  }
+
   try {
     const update = await checkUpdate();
     if (update) {
       updateManifest = update;
-      const btn = $('btn-check-updates');
       if (btn) {
         btn.innerText = "Update Now";
         btn.classList.add('update-ready');
+        btn.disabled = false;
       }
       if (!silent) showUpdateModal();
-    } else if (!silent) {
-      showToast("You are already using the latest version.", 'info');
+    } else {
+      if (btn && !silent) {
+        btn.innerText = "Up to Date";
+        setTimeout(() => {
+          btn.innerText = "Check for Updates";
+          btn.disabled = false;
+        }, 3000);
+      }
+      if (!silent) showToast("You are already using the latest version.", 'info');
     }
   } catch (err) {
     console.error("Update check failed:", err);
+    if (btn && !silent) {
+      btn.innerText = "Check Failed";
+      btn.disabled = false;
+      setTimeout(() => {
+        btn.innerText = "Check for Updates";
+      }, 3000);
+    }
     if (!silent) showToast(`Update check failed: ${err}`, 'error');
   }
 }
@@ -972,7 +992,7 @@ function showUpdateModal() {
 }
 
 $('btn-check-updates').addEventListener('click', () => {
-  if (updateData) {
+  if (updateManifest) {
     showUpdateModal();
   } else {
     checkUpdates(false);
