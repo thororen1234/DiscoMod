@@ -1,6 +1,7 @@
 
 const { invoke } = window.__TAURI__.core;
 const { open: openDialog, message, ask, confirm } = window.__TAURI__.dialog;
+const { openUrl } = window.__TAURI__.opener;
 const { getCurrentWindow } = window.__TAURI__.window;
 const { check: checkUpdate } = window.__TAURI__.updater;
 let config = {};
@@ -24,18 +25,19 @@ async function init() {
   await setupWindowControls();
   await loadConfig();
 
-
   try {
     if (window.__TAURI__?.app) {
       const version = await window.__TAURI__.app.getVersion();
       const el = $('sidebar-sub');
       if (el) el.innerText = `v${version} // Stable`;
     } else {
-      $('sidebar-sub').innerText = `vDev // Development`;
+      const sub = $('sidebar-sub');
+      if (sub) sub.innerText = `vDev // Development`;
     }
   } catch (e) {
     console.error("Failed to load version info:", e);
-    $('sidebar-sub').innerText = `vUnknown // Error`;
+    const sub = $('sidebar-sub');
+    if (sub) sub.innerText = `vUnknown // Error`;
   }
 
   setupNavigation();
@@ -43,9 +45,19 @@ async function init() {
   setupSongsEvents();
   setupConfigEvents();
   setupModals();
+  setupExternalLinks();
 
-  await refreshMods();
-  await refreshSongs();
+  try {
+    await refreshMods();
+  } catch (e) {
+    console.error('Failed to refresh mods:', e);
+  }
+
+  try {
+    await refreshSongs();
+  } catch (e) {
+    console.error('Failed to refresh songs:', e);
+  }
 
   checkUpdates(true);
 }
@@ -741,6 +753,17 @@ function setupConfigEvents() {
   });
 }
 
+function setupExternalLinks() {
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-external-url]');
+    if (target) {
+      e.preventDefault();
+      const url = target.getAttribute('data-external-url');
+      if (url) openUrl(url);
+    }
+  });
+}
+
 function setupModals() {
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('mousedown', (e) => {
@@ -1049,7 +1072,7 @@ function renderNexusMods(mods) {
         if (err === "PREMIUM_REQUIRED") {
           const yes = await confirm("Direct API downloads require a Nexus Premium account. Would you like to open the manual download page instead?", { title: "Nexus Premium Required", kind: 'info' });
           if (yes) {
-            window.__TAURI__.shell.open(`https://www.nexusmods.com/deadasdisco/mods/${m.mod_id}?tab=files`);
+            openUrl(`https://www.nexusmods.com/deadasdisco/mods/${m.mod_id}?tab=files`);
           }
         } else {
           showToast(err, 'error');
