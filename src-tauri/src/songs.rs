@@ -1,8 +1,8 @@
+use crate::utils::{rand_u64, safe_folder_name, unique_dest};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::utils::{safe_folder_name, unique_dest, rand_u64};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -189,8 +189,6 @@ pub fn update_song_metadata(
     fs::write(&meta_path, json_str).map_err(|e| e.to_string())?;
     Ok(vec![])
 }
-
-
 
 #[tauri::command]
 pub fn import_song(
@@ -625,6 +623,19 @@ pub async fn download_song(
                 if let Ok(val) = serde_json::from_str::<serde_json::Value>(&data) {
                     if val["discomapsId"].as_str() == Some(&map_id) {
                         return Ok(format!("'{}' is already downloaded.", title));
+                    }
+
+                    let s_title = val["songName"].as_str().unwrap_or("");
+                    let s_artist_val = &val["performedBy"];
+
+                    let artist_matches = if let Some(arr) = s_artist_val.as_array() {
+                        arr.iter().any(|v| v.as_str() == Some(&artist))
+                    } else {
+                        s_artist_val.as_str() == Some(&artist)
+                    };
+
+                    if s_title == title && artist_matches {
+                        return Ok(format!("'{}' is already installed.", title));
                     }
                 }
             }

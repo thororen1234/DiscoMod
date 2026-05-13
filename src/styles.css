@@ -549,7 +549,7 @@ a:hover { color: var(--accent-hover); }
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   animation: slideUp 0.2s ease-out;
 }
-.modal-wide { max-width: 640px; }
+.modal-wide { max-width: 850px; }
 .modal-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 20px; }
 .modal-body { margin-bottom: 24px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
@@ -603,9 +603,10 @@ a:hover { color: var(--accent-hover); }
 }
 .loading-text { font-size: 13px; color: var(--text-main); }
 
-.downloader-body { display: flex; flex-direction: column; gap: 12px; }
-.downloader-body .search-bar { display: flex; gap: 8px; width: 100%; }
-.downloader-body .search-input { flex: 1; max-width: none; }
+.downloader-body { display: flex; flex-direction: column; gap: 16px; }
+.downloader-body .search-bar { display: flex; gap: 12px; width: 100%; }
+.downloader-body .search-input { flex: 1; max-width: none; height: 40px; font-size: 14px; padding: 0 16px; }
+.downloader-body .modal-btn { height: 40px; padding: 0 20px; font-size: 14px; }
 
 .method-modal-body p { margin-bottom: 16px; color: var(--text-dim); font-size: 13px; }
 .method-buttons { display: flex; flex-direction: column; gap: 10px; }
@@ -616,28 +617,29 @@ a:hover { color: var(--accent-hover); }
 .settings-section-title { font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
 .search-input { flex: 1; }
 .dl-catalogue {
-  max-height: 400px; overflow-y: auto; overflow-x: hidden;
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+  max-height: 550px; overflow-y: auto; overflow-x: hidden;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
   padding-right: 4px;
 }
-.dl-placeholder { grid-column: span 2; text-align: center; padding: 32px; color: var(--text-dim); font-size: 13px; }
+.dl-placeholder { grid-column: span 2; text-align: center; padding: 40px; color: var(--text-dim); font-size: 14px; }
 .dl-item {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 12px;
   background: var(--bg-dark); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 6px 10px;
+  border-radius: var(--radius); padding: 12px 16px;
   transition: all var(--transition);
   min-width: 0;
 }
-.dl-item:hover { background: var(--bg-hover); }
+.dl-item:hover { background: var(--bg-hover); border-color: var(--accent); }
 .dl-info { flex: 1; min-width: 0; }
-.dl-title { font-size: 11.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dl-artist { font-size: 10px; color: var(--text-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dl-bpm { font-size: 10px; color: var(--accent); margin-top: 1px; }
+.dl-title, .dl-name { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+.dl-artist, .dl-meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-bpm { font-size: 11px; color: var(--accent); margin-top: 2px; font-weight: 600; }
 .dl-btn {
   width: auto;
-  padding: 5px 10px; border-radius: var(--radius-sm); font-size: 10px; font-weight: 600;
+  padding: 0 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700;
   background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border);
   white-space: nowrap; transition: all var(--transition);
+  height: 34px; display: inline-flex; align-items: center; justify-content: center;
 }
 .dl-btn:hover { background: var(--bg-hover); border-color: var(--border-hover); }
 .dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
