@@ -604,7 +604,13 @@ pub async fn download_song(
     let base = imported_songs_dir();
     fs::create_dir_all(&base).ok();
 
-    let map_id = map_entry["id"].as_str().unwrap_or("").to_string();
+    let j_url = map_entry["jUrl"].as_str().unwrap_or("");
+    let map_id = if !j_url.is_empty() {
+        j_url.split('/').nth(1).unwrap_or("").to_string()
+    } else {
+        map_entry["id"].as_str().unwrap_or("").to_string()
+    };
+
     let title = map_entry["t"].as_str().unwrap_or("Unknown").to_string();
     let artist = map_entry["a"]
         .as_str()
@@ -613,7 +619,7 @@ pub async fn download_song(
     let bpm = map_entry["b"].as_f64().unwrap_or(120.0);
 
     if map_id.is_empty() {
-        return Err("Invalid map entry: missing id".to_string());
+        return Err("Invalid map entry: missing id and jUrl".to_string());
     }
 
     if let Ok(entries) = fs::read_dir(&base) {
@@ -653,7 +659,15 @@ pub async fn download_song(
             .header("x-api-key", api_key.trim())
     };
 
-    let audio_url = format!("{}/{}/Audio.ogg", CDN_BASE, map_id);
+    let base_download_url = if !j_url.is_empty() {
+        j_url
+            .replace("r2:", "https://cdn.discomaps.com/")
+            .replace("/Meta.json", "")
+    } else {
+        format!("{}/{}", CDN_BASE, map_id)
+    };
+
+    let audio_url = format!("{}/Audio.ogg", base_download_url);
     let audio_resp = headers_fn(&client, &audio_url).send().await.map_err(|e| {
         fs::remove_dir_all(&dest_folder).ok();
         e.to_string()
@@ -670,7 +684,7 @@ pub async fn download_song(
     let audio_bytes = audio_resp.bytes().await.map_err(|e| e.to_string())?;
     fs::write(dest_folder.join("Audio.ogg"), &audio_bytes).map_err(|e| e.to_string())?;
 
-    let meta_url = format!("{}/{}/Meta.json", CDN_BASE, map_id);
+    let meta_url = format!("{}/Meta.json", base_download_url);
     let meta_resp = headers_fn(&client, &meta_url)
         .send()
         .await
