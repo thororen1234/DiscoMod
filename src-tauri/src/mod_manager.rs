@@ -102,6 +102,201 @@ fn read_config() -> Config {
     Config::default()
 }
 
+#[tauri::command]
+pub fn open_game_root(exe_path: String) -> Result<(), String> {
+    let p = Path::new(&exe_path);
+    if !p.exists() {
+        return Err("Game executable path does not exist".to_string());
+    }
+
+    let mut root = p.parent().ok_or("No parent directory")?.to_path_buf();
+
+    for ancestor in p.ancestors() {
+        let name = ancestor
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+        if name == "win64" {
+            if let Some(binaries) = ancestor.parent() {
+                if binaries
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("")
+                    .to_lowercase()
+                    == "binaries"
+                {
+                    if let Some(pagoda_root) = binaries.parent() {
+                        root = pagoda_root.to_path_buf();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    open::that(root).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn open_active_mods_folder(exe_path: String) -> Result<(), String> {
+    let mods_path = find_active_mods_path(&exe_path).ok_or("Could not find ~mods folder")?;
+    if !mods_path.exists() {
+        fs::create_dir_all(&mods_path).map_err(|e| e.to_string())?;
+    }
+    open::that(mods_path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn open_folder(path: String) -> Result<(), String> {
+    let p = Path::new(&path);
+    let dir = if p.is_file() {
+        p.parent().ok_or("No parent directory")?
+    } else {
+        p
+    };
+
+    if !dir.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    open::that(dir).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn open_logic_mods_folder(exe_path: String) -> Result<(), String> {
+    let mods_path = find_active_mods_path(&exe_path).ok_or("Could not find game data path")?;
+    let paks_dir = mods_path.parent().ok_or("No paks directory")?;
+    let logic_mods = paks_dir.join("LogicMods");
+
+    if !logic_mods.exists() {
+        fs::create_dir_all(&logic_mods).map_err(|e| e.to_string())?;
+    }
+    open::that(logic_mods).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn open_config_dir() -> Result<(), String> {
+    let path = config_dir();
+    open_folder(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn open_themes_dir() -> Result<(), String> {
+    let path = config_dir().join("themes");
+    open_folder(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn list_themes() -> Result<Vec<(String, String)>, String> {
+    let path = config_dir().join("themes");
+    if !path.exists() {
+        fs::create_dir_all(&path).map_err(|e| e.to_string())?;
+    }
+
+    let mut themes = vec![];
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_file() && p.extension().map(|e| e == "css").unwrap_or(false) {
+                if let Some(name) = p.file_stem().and_then(|n| n.to_str()) {
+                    themes.push((name.to_string(), p.to_string_lossy().to_string()));
+                }
+            }
+        }
+    }
+    Ok(themes)
+}
+
+#[tauri::command]
+pub fn read_theme(path: String) -> Result<String, String> {
+    fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn install_ue4ss(exe_path: String) -> Result<String, String> {
+    if exe_path.is_empty() {
+        return Err("No game executable selected".to_string());
+    }
+
+    let win64_dir = crate::utils::find_win64_dir(&exe_path)
+        .ok_or("Could not find Win64 directory. Please ensure your game path is correct.")?;
+
+    let client = reqwest::Client::builder()
+        .user_agent("DiscoMod")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let url = "https://api.github.com/repos/UE4SS-RE/RE-UE4SS/releases/tags/experimental-latest";
+    let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API error: {}", resp.status()));
+    }
+
+    let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+
+    let assets = json["assets"]
+        .as_array()
+        .ok_or("No assets found in release")?;
+    let mut download_url = None;
+    for asset in assets {
+        let name = asset["name"].as_str().unwrap_or("").to_lowercase();
+        if name.starts_with("ue4ss_") && name.ends_with(".zip") {
+            download_url = Some(
+                asset["browser_download_url"]
+                    .as_str()
+                    .ok_or("No download URL")?
+                    .to_string(),
+            );
+            break;
+        }
+    }
+
+    let download_url = download_url.ok_or("Could not find matching UE4SS zip asset")?;
+
+    let zip_resp = client
+        .get(&download_url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    let bytes = zip_resp.bytes().await.map_err(|e| e.to_string())?;
+
+    let reader = std::io::Cursor::new(bytes);
+    let mut archive = zip::ZipArchive::new(reader).map_err(|e| e.to_string())?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
+        let outpath = match file.enclosed_name() {
+            Some(path) => win64_dir.join(path),
+            None => continue,
+        };
+
+        if (*file.name()).ends_with('/') {
+            fs::create_dir_all(&outpath).map_err(|e| e.to_string())?;
+        } else {
+            if let Some(p) = outpath.parent() {
+                if !p.exists() {
+                    fs::create_dir_all(p).map_err(|e| e.to_string())?;
+                }
+            }
+            let mut outfile = fs::File::create(&outpath).map_err(|e| e.to_string())?;
+            std::io::copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
+        }
+    }
+
+    Ok("UE4SS installed successfully".to_string())
+}
+
+#[tauri::command]
+pub fn get_build_info() -> String {
+    if cfg!(debug_assertions) {
+        "Development".to_string()
+    } else {
+        "Stable".to_string()
+    }
+}
+
 fn write_config(cfg: &Config) -> Result<(), String> {
     let path = config_file();
     let json = serde_json::to_string_pretty(cfg).map_err(|e| e.to_string())?;
@@ -151,14 +346,18 @@ fn find_active_mods_path(exe_path: &str) -> Option<PathBuf> {
             let paks = root.join(folder_name).join("Content").join("Paks");
             if paks.exists() {
                 let mods = paks.join("~mods");
+                let logic_mods = paks.join("LogicMods");
                 fs::create_dir_all(&mods).ok();
+                fs::create_dir_all(&logic_mods).ok();
                 return Some(mods);
             }
         }
         let paks = root.join("Content").join("Paks");
         if paks.exists() {
             let mods = paks.join("~mods");
+            let logic_mods = paks.join("LogicMods");
             fs::create_dir_all(&mods).ok();
+            fs::create_dir_all(&logic_mods).ok();
             return Some(mods);
         }
     }
@@ -410,6 +609,9 @@ pub fn sync_mods(selected_mods: Vec<String>) -> Result<(), String> {
     let active_mods_path =
         find_active_mods_path(&cfg.exe_path).ok_or_else(|| "Invalid game path".to_string())?;
 
+    let paks_dir = active_mods_path.parent().ok_or("No paks directory")?;
+    let logic_mods_path = paks_dir.join("LogicMods");
+
     if cfg.mods_storage_path.is_empty() {
         return Err("Invalid storage path".to_string());
     }
@@ -437,9 +639,45 @@ pub fn sync_mods(selected_mods: Vec<String>) -> Result<(), String> {
         }
     }
 
+    if logic_mods_path.exists() {
+        if let Ok(entries) = fs::read_dir(&logic_mods_path) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_file() {
+                    let ext = p
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("")
+                        .to_lowercase();
+                    if valid_ext.contains(&ext.as_str()) {
+                        fs::remove_file(&p).ok();
+                    }
+                } else if p.is_dir() {
+                    fs::remove_dir_all(&p).ok();
+                }
+            }
+        }
+    }
+
     for mod_name in &selected_mods {
         let mod_dir = storage_path.join(mod_name);
         if mod_dir.exists() {
+            let mod_type = if let Ok(data) = fs::read_to_string(mod_dir.join("mod.json")) {
+                let v: serde_json::Value = serde_json::from_str(&data).unwrap_or_default();
+                v["type"].as_str().unwrap_or("other").to_string()
+            } else {
+                "other".to_string()
+            };
+
+            let target_path = if mod_type == "logic" {
+                if !logic_mods_path.exists() {
+                    fs::create_dir_all(&logic_mods_path).ok();
+                }
+                &logic_mods_path
+            } else {
+                &active_mods_path
+            };
+
             if let Ok(entries) = fs::read_dir(&mod_dir) {
                 for entry in entries.flatten() {
                     let p = entry.path();
@@ -450,7 +688,7 @@ pub fn sync_mods(selected_mods: Vec<String>) -> Result<(), String> {
                             .unwrap_or("")
                             .to_lowercase();
                         if valid_ext.contains(&ext.as_str()) {
-                            let dest = active_mods_path.join(p.file_name().unwrap());
+                            let dest = target_path.join(p.file_name().unwrap());
                             fs::copy(&p, &dest).map_err(|e| e.to_string())?;
                         }
                     }
@@ -542,12 +780,22 @@ pub fn install_mod(archive_path: String, mod_name: String, mod_type: String) -> 
         }
 
         fs::create_dir_all(&target_dir).map_err(|e| e.to_string())?;
+
+        let mut final_type = mod_type;
+        for entry in walkdir::WalkDir::new(&temp_dir).into_iter().flatten() {
+            if entry.path().to_string_lossy().contains("LogicMods") {
+                final_type = "logic".to_string();
+                break;
+            }
+        }
+
         for f in &found_files {
             let dest = target_dir.join(f.file_name().unwrap());
             fs::copy(f, &dest).map_err(|e| e.to_string())?;
         }
 
-        let metadata = serde_json::json!({ "name": mod_name, "type": mod_type, "enabled": false });
+        let metadata =
+            serde_json::json!({ "name": mod_name, "type": final_type, "enabled": false });
         fs::write(
             target_dir.join("mod.json"),
             serde_json::to_string_pretty(&metadata).unwrap(),
@@ -801,9 +1049,15 @@ pub fn import_mod_from_folder(
 
     fs::create_dir_all(&target_dir).map_err(|e| e.to_string())?;
 
+    let mut final_type = mod_type;
     let valid_ext = ["pak", "ucas", "utoc", "json"];
     for entry in walkdir::WalkDir::new(source).into_iter().flatten() {
         let p = entry.path();
+
+        if p.to_string_lossy().contains("LogicMods") {
+            final_type = "logic".to_string();
+        }
+
         if p.is_file() {
             let ext = p
                 .extension()
@@ -817,7 +1071,7 @@ pub fn import_mod_from_folder(
         }
     }
 
-    let metadata = serde_json::json!({ "name": mod_name, "type": mod_type, "enabled": false });
+    let metadata = serde_json::json!({ "name": mod_name, "type": final_type, "enabled": false });
     fs::write(
         target_dir.join("mod.json"),
         serde_json::to_string_pretty(&metadata).unwrap(),

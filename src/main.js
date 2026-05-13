@@ -7,6 +7,7 @@ const { check: checkUpdate } = window.__TAURI__.updater;
 let config = {};
 let availableMods = [];
 let availableSongs = [];
+let currentPremiumModId = null;
 
 const $ = (id) => document.getElementById(id);
 const formatDate = (ts) => {
@@ -26,18 +27,21 @@ async function init() {
   await loadConfig();
 
   try {
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const branch = isDev ? 'Development' : 'Stable';
+
     if (window.__TAURI__?.app) {
       const version = await window.__TAURI__.app.getVersion();
-      const el = $('sidebar-sub');
-      if (el) el.innerText = `v${version} // Stable`;
+      const el = $('title-bar-text');
+      if (el) el.innerText = `DISCOMOD // ${branch} v${version}`;
     } else {
-      const sub = $('sidebar-sub');
-      if (sub) sub.innerText = `vDev // Development`;
+      const el = $('title-bar-text');
+      if (el) el.innerText = `DISCOMOD // ${branch} vDev`;
     }
   } catch (e) {
     console.error("Failed to load version info:", e);
-    const sub = $('sidebar-sub');
-    if (sub) sub.innerText = `vUnknown // Error`;
+    const el = $('title-bar-text');
+    if (el) el.innerText = `DISCOMOD // Error vUnknown`;
   }
 
   setupNavigation();
@@ -46,6 +50,8 @@ async function init() {
   setupConfigEvents();
   setupModals();
   setupExternalLinks();
+  setupUtilityEvents();
+  setupCustomSelects();
 
   try {
     await refreshMods();
@@ -60,6 +66,8 @@ async function init() {
   }
 
   checkUpdates(true);
+
+  loadCustomThemes();
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -125,6 +133,13 @@ async function loadConfig() {
     if (config.theme) {
       document.documentElement.setAttribute('data-theme', config.theme);
       $('theme-select').value = config.theme;
+
+      const themeLabel = $('theme-current-label');
+      const selectedOption = document.querySelector(`.custom-option[data-value="${config.theme}"]`);
+      if (themeLabel && selectedOption) {
+        themeLabel.innerText = selectedOption.innerText;
+        document.querySelectorAll('.custom-option').forEach(o => o.classList.toggle('selected', o === selectedOption));
+      }
     }
     if (config.modsSort) $('mods-sort').value = config.modsSort;
     if (config.modsStatusFilter) $('mods-status-filter').value = config.modsStatusFilter;
@@ -134,11 +149,67 @@ async function loadConfig() {
   }
 }
 
+async function loadCustomThemes() {
+  try {
+    const themes = await invoke('list_themes');
+    if (!themes || !Array.isArray(themes)) return;
+
+    const optionsContainer = $('theme-options');
+    const nativeSelect = $('theme-select');
+    if (!optionsContainer || !nativeSelect) return;
+
+    if (document.querySelector('.custom-option-group-label')) return;
+
+    const group = document.createElement('div');
+    group.className = 'custom-option-group custom-option-group-label';
+    group.innerText = 'Custom Themes';
+    optionsContainer.appendChild(group);
+
+    for (const theme of themes) {
+      if (!Array.isArray(theme) || theme.length < 2) continue;
+      const [name, path] = theme;
+      
+      try {
+        const cssContent = await invoke('read_theme', { path });
+        const style = document.createElement('style');
+        style.id = `custom-theme-${name}`;
+        style.textContent = cssContent;
+        document.head.appendChild(style);
+      } catch (e) {
+        console.error("Failed to read theme content:", name, e);
+        continue;
+      }
+
+      const opt = document.createElement('div');
+      opt.className = 'custom-option';
+      opt.dataset.value = name;
+      opt.innerText = name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      optionsContainer.appendChild(opt);
+
+      const nativeOpt = document.createElement('option');
+      nativeOpt.value = name;
+      nativeOpt.innerText = opt.innerText;
+      nativeSelect.appendChild(nativeOpt);
+    }
+
+    if (config.theme) {
+      const selectedOption = document.querySelector(`.custom-option[data-value="${config.theme}"]`);
+      if (selectedOption) {
+        $('theme-current-label').innerText = selectedOption.innerText;
+        document.querySelectorAll('.custom-option').forEach(o => o.classList.toggle('selected', o === selectedOption));
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load custom themes:", e);
+  }
+}
+
 async function saveConfig() {
   try {
     await invoke('save_config', { config });
   } catch (err) {
-    showToast("Sync error", 'error');
+    showToast(`Sync error: ${err}`, 'error');
+    setStatus('● ' + "Sync error", true);
   }
 }
 
@@ -155,13 +226,15 @@ function setupNavigation() {
       navBtns.forEach(b => b.classList.toggle('active', b === btn));
       pages.forEach(p => p.classList.toggle('active', p.id === `page-${targetPage}`));
 
-      actionBars.forEach(bar => {
+      const navActions = document.querySelectorAll('.nav-actions');
+      navActions.forEach(bar => {
         bar.style.display = bar.id === `actions-${targetPage}` ? 'flex' : 'none';
       });
 
       const actionsLabel = $('nav-actions-lbl');
       if (actionsLabel) {
-        actionsLabel.style.display = (targetPage === 'mods' || targetPage === 'songs') ? 'block' : 'none';
+        const hasActions = (targetPage === 'mods' || targetPage === 'songs');
+        actionsLabel.style.display = hasActions ? 'flex' : 'none';
       }
     });
   });
@@ -229,6 +302,7 @@ function renderMods() {
       <select class="mod-type-select" data-id="${mod.folderName}">
         <option value="character" ${mod.type === 'character' ? 'selected' : ''}>Character</option>
         <option value="map" ${mod.type === 'map' ? 'selected' : ''}>Map</option>
+        <option value="logic" ${mod.type === 'logic' ? 'selected' : ''}>Logic</option>
         <option value="other" ${mod.type === 'other' ? 'selected' : ''}>Other</option>
       </select>
       <button class="icon-btn btn-rename-mod" data-id="${mod.folderName}" title="Rename Mod">
@@ -337,6 +411,27 @@ function setupModsEvents() {
       setStatus('● ' + "Sync error", true);
     }
   });
+
+  $('btn-open-game-dir')?.addEventListener('click', () => invoke('open_game_root'));
+  $('btn-open-active-mods-dir')?.addEventListener('click', () => invoke('open_active_mods_folder', { exePath: config.exePath }));
+  $('btn-open-logic-mods-dir')?.addEventListener('click', () => invoke('open_logic_mods_folder', { exePath: config.exePath }));
+  $('btn-open-storage-dir')?.addEventListener('click', async () => {
+    const cfg = await invoke('load_config');
+    if (cfg.modsStoragePath) invoke('open_folder', { path: cfg.modsStoragePath });
+  });
+  $('btn-open-config-dir')?.addEventListener('click', () => invoke('open_config_dir'));
+  $('btn-open-themes-dir')?.addEventListener('click', () => invoke('open_themes_dir'));
+  $('btn-install-ue4ss')?.addEventListener('click', async () => {
+    try {
+      showToast("Downloading and installing UE4SS...", 'info');
+      const msg = await invoke('install_ue4ss', { exePath: config.exePath });
+      showToast(msg, 'success');
+    } catch (err) {
+      showToast(`Installation failed: ${err}`, 'error');
+    }
+  });
+
+
 
   $('btn-add-mod').addEventListener('click', () => showModal('modal-mod-import-method'));
   $('mod-method-cancel').addEventListener('click', () => closeModal('modal-mod-import-method'));
@@ -841,6 +936,14 @@ function setupModals() {
 
   $('modal-downloader-close').addEventListener('click', () => closeModal('modal-downloader'));
 
+  $('modal-premium-cancel').addEventListener('click', () => closeModal('modal-premium'));
+  $('modal-premium-manual').addEventListener('click', () => {
+    if (currentPremiumModId) {
+      openUrl(`https://www.nexusmods.com/deadasdisco/mods/${currentPremiumModId}?tab=files`);
+    }
+    closeModal('modal-premium');
+  });
+
 
 
   let catalogue = [];
@@ -1070,10 +1173,8 @@ function renderNexusMods(mods) {
         refreshMods();
       } catch (err) {
         if (err === "PREMIUM_REQUIRED") {
-          const yes = await confirm("Direct API downloads require a Nexus Premium account. Would you like to open the manual download page instead?", { title: "Nexus Premium Required", kind: 'info' });
-          if (yes) {
-            openUrl(`https://www.nexusmods.com/deadasdisco/mods/${m.mod_id}?tab=files`);
-          }
+          currentPremiumModId = m.mod_id;
+          showModal('modal-premium');
         } else {
           showToast(err, 'error');
         }
@@ -1085,5 +1186,69 @@ function renderNexusMods(mods) {
     el.appendChild(info);
     el.appendChild(btn);
     container.appendChild(el);
+  });
+}
+
+function setupUtilityEvents() {
+  $('btn-open-game-dir').addEventListener('click', async () => {
+    if (!config.exePath) return showToast("Game path not set! Go to Settings.", 'error');
+    try {
+      await invoke('open_game_root', { exePath: config.exePath });
+    } catch (err) {
+      showToast(`Failed to open folder: ${err}`, 'error');
+    }
+  });
+
+  $('btn-open-active-mods-dir').addEventListener('click', async () => {
+    if (!config.exePath) return showToast("Game path not set! Go to Settings.", 'error');
+    try {
+      await invoke('open_active_mods_folder', { exePath: config.exePath });
+    } catch (err) {
+      showToast(`Failed to open folder: ${err}`, 'error');
+    }
+  });
+
+  $('btn-open-storage-dir').addEventListener('click', async () => {
+    if (!config.modsStoragePath) return showToast("Storage path not set! Go to Settings.", 'error');
+    try {
+      await invoke('open_folder', { path: config.modsStoragePath });
+    } catch (err) {
+      showToast(`Failed to open folder: ${err}`, 'error');
+    }
+  });
+}
+
+function setupCustomSelects() {
+  const customSelect = $('theme-custom-select');
+  const trigger = $('theme-trigger');
+  const label = $('theme-current-label');
+  const optionsPanel = $('theme-options');
+  const nativeSelect = $('theme-select');
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    customSelect.classList.toggle('open');
+  });
+
+  optionsPanel.addEventListener('click', (e) => {
+    const opt = e.target.closest('.custom-option');
+    if (!opt) return;
+
+    const value = opt.dataset.value;
+    const text = opt.innerText;
+
+    label.innerText = text;
+    nativeSelect.value = value;
+    customSelect.classList.remove('open');
+
+    config.theme = value;
+    document.documentElement.setAttribute('data-theme', value);
+    saveConfig();
+
+    document.querySelectorAll('.custom-option').forEach(o => o.classList.toggle('selected', o === opt));
+  });
+
+  document.addEventListener('click', () => {
+    customSelect.classList.remove('open');
   });
 }
