@@ -877,7 +877,7 @@ dependencies = [
 
 [[package]]
 name = "discomod"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
  "dirs 5.0.1",
  "open",
