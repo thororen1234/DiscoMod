@@ -13,6 +13,7 @@
   "license": "GPL-3.0-or-later",
   "author": "thororen1234",
   "type": "module",
+  "packageManager": "pnpm@11.1.11",
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
