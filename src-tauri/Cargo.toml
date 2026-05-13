@@ -1,6 +1,6 @@
 [package]
 name = "discomod"
-version = "1.0.2"
+version = "1.0.3"
 description = "A Mod Manager for Dead as Disco"
 authors = ["thororen1234"]
 edition = "2021"
