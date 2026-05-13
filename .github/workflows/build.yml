@@ -21,11 +21,11 @@ jobs:
             ffmpeg_ext: zip
           - os: macos-15-intel
             target: x86_64-apple-darwin
-            ffmpeg_url: https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v7.1.3-6/jellyfin-ffmpeg_7.1.3-6_portable_macos64-gpl.tar.xz
+            ffmpeg_url: https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v7.1.3-6/jellyfin-ffmpeg_7.1.3-6_portable_mac64-gpl.tar.xz
             ffmpeg_ext: tar.xz
           - os: macos-latest
             target: aarch64-apple-darwin
-            ffmpeg_url: https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v7.1.3-6/jellyfin-ffmpeg_7.1.3-6_portable_macos64-gpl.tar.xz
+            ffmpeg_url: https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v7.1.3-6/jellyfin-ffmpeg_7.1.3-6_portable_macarm64-gpl.tar.xz
             ffmpeg_ext: tar.xz
 
     runs-on: ${{ matrix.os }}
