@@ -14,14 +14,6 @@ pub struct NexusMod {
     pub picture_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NexusFile {
-    pub file_id: u32,
-    pub name: String,
-    pub version: String,
-    pub size_kb: u64,
-}
-
 const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1";
 const GAME_DOMAIN: &str = "deadasdisco";
 
