@@ -47,7 +47,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "RWQLBfA3x5GYVPBb7M3Aq2jBcLxEeerG/cYumWuMcUR9ayAeLWJl3HgQ",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU0OTg5MUM3MzdGMDA1MEIKUldRTEJmQTN4NUdZVlBCYjdNM0FxMmpCY0x4RWVlckcvY1l1bVd1TWNVUjlheUFlTFdKbDNIZ1EK",
       "endpoints": [
         "https://github.com/thororen1234/DiscoMod/releases/latest/download/latest.json"
       ]
