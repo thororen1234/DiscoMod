@@ -127,7 +127,10 @@ fn find_active_mods_path(exe_path: &str) -> Option<PathBuf> {
     let mut possible_roots: Vec<PathBuf> = vec![p.parent()?.to_path_buf()];
 
     for ancestor in p.ancestors() {
-        let name = ancestor.file_name()?.to_str()?.to_lowercase();
+        let name = match ancestor.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_lowercase(),
+            None => continue,
+        };
         if name == "win64" || name == "binaries" {
             if let Some(parent) = ancestor.parent() {
                 if !possible_roots.contains(&parent.to_path_buf()) {
