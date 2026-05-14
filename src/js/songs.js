@@ -1,5 +1,6 @@
 import { invoke, ask, openDialog, openUrl } from './api.js';
 import { $, formatDate, showToast, setStatus, showModal, closeModal, showImportSelectionModal } from './utils.js';
+import { saveConfig } from './config.js';
 import { state } from './state.js';
 
 let audioPlayer = new Audio();
@@ -21,6 +22,7 @@ export function renderSongs() {
   const emptyState = $('songs-empty');
   const searchTerm = ($('songs-search')?.value || '').toLowerCase();
   const sortBy = $('songs-sort')?.value || 'name';
+  const sortOrder = $('songs-sort-order')?.classList.contains('desc') ? 'desc' : 'asc';
 
   container.innerHTML = '';
   const stats = $('songs-stats');
@@ -32,14 +34,19 @@ export function renderSongs() {
   );
 
   filtered.sort((a, b) => {
-    if (sortBy === 'date') return (b.createdAt || 0) - (a.createdAt || 0);
-    if (sortBy === 'bpm') return (a.tempo || 0) - (b.tempo || 0);
-    if (sortBy === 'artist') {
+    let res = 0;
+    if (sortBy === 'date') res = (a.createdAt || 0) - (b.createdAt || 0);
+    else if (sortBy === 'bpm') res = (a.tempo || 0) - (b.tempo || 0);
+    else if (sortBy === 'artist') {
       const artA = Array.isArray(a.performedBy) ? a.performedBy.join('') : '';
       const artB = Array.isArray(b.performedBy) ? b.performedBy.join('') : '';
-      return artA.localeCompare(artB);
+      res = artA.localeCompare(artB);
+    } else {
+      res = a.songName.localeCompare(b.songName);
     }
-    return a.songName.localeCompare(b.songName);
+
+    if (sortOrder === 'desc') return -res;
+    return res;
   });
 
   if (filtered.length === 0) {
@@ -180,11 +187,17 @@ function updateSongsBulkUI() {
 }
 
 export function setupSongsEvents() {
-  $('btn-refresh-songs').addEventListener('click', refreshSongs);
   $('songs-search').addEventListener('input', renderSongs);
   $('songs-sort').addEventListener('change', () => {
     state.config.songsSort = $('songs-sort').value;
     renderSongs();
+    saveConfig();
+  });
+  $('songs-sort-order')?.addEventListener('click', () => {
+    $('songs-sort-order').classList.toggle('desc');
+    state.config.songsSortOrder = $('songs-sort-order').classList.contains('desc') ? 'desc' : 'asc';
+    renderSongs();
+    saveConfig();
   });
 
   $('btn-import-song').addEventListener('click', () => {
@@ -210,7 +223,6 @@ export function setupSongsEvents() {
             items.forEach(item => { item.sourceFile = file; });
             allScannedItems = allScannedItems.concat(items);
           } else {
-            // Individual audio file
             allScannedItems.push({ name: file.split(/[\\/]/).pop(), internal_path: file, sourceFile: file, isDirect: true });
           }
         }

@@ -143,8 +143,6 @@ pub fn import_mods_from_zip(
             }
         }
 
-        // Now install the mod from the extracted folder
-        // We need to find the files in the temp_dest
         let valid_ext = ["pak", "ucas", "utoc"];
         let mut found_files = vec![];
         for entry in walkdir::WalkDir::new(&temp_dest).into_iter().flatten() {
@@ -214,6 +212,16 @@ pub struct Config {
     pub nexus_api_key: String,
     #[serde(default = "default_theme")]
     pub theme: String,
+    #[serde(default)]
+    pub mods_sort: String,
+    #[serde(default)]
+    pub mods_sort_order: String,
+    #[serde(default)]
+    pub mods_status_filter: String,
+    #[serde(default)]
+    pub songs_sort: String,
+    #[serde(default)]
+    pub songs_sort_order: String,
 }
 
 fn default_theme() -> String {
@@ -236,6 +244,11 @@ impl Default for Config {
             discomaps_api_key: String::new(),
             nexus_api_key: String::new(),
             theme: "dark".to_string(),
+            mods_sort: "name".to_string(),
+            mods_sort_order: "asc".to_string(),
+            mods_status_filter: "all".to_string(),
+            songs_sort: "name".to_string(),
+            songs_sort_order: "asc".to_string(),
         }
     }
 }
@@ -256,6 +269,10 @@ pub struct ModMetadata {
     pub size: u64,
     #[serde(default = "default_mod_version")]
     pub version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nexus_id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub folder_path: Option<String>,
 }
 
 fn default_mod_version() -> String {
@@ -755,6 +772,8 @@ fn ensure_mod_json(mod_path: &Path) -> Option<ModMetadata> {
         created_at: 0,
         size: get_dir_size(mod_path),
         version: "1.0.0".to_string(),
+        nexus_id: None,
+        folder_path: None,
     };
 
     if json_path.exists() {
@@ -764,6 +783,7 @@ fn ensure_mod_json(mod_path: &Path) -> Option<ModMetadata> {
                 meta.mod_type = parsed.mod_type;
                 meta.created_at = parsed.created_at;
                 meta.version = parsed.version;
+                meta.nexus_id = parsed.nexus_id;
             }
         }
     }
@@ -788,6 +808,7 @@ fn ensure_mod_json(mod_path: &Path) -> Option<ModMetadata> {
         "enabled": meta.enabled,
         "createdAt": meta.created_at,
         "version": meta.version,
+        "nexusId": meta.nexus_id,
     });
     fs::write(
         &json_path,
@@ -843,6 +864,7 @@ pub fn get_available_mods() -> Vec<ModMetadata> {
                     meta.enabled = cfg
                         .active_mods
                         .contains(&meta.folder_name.clone().unwrap_or_default());
+                    meta.folder_path = Some(path.to_string_lossy().to_string());
                     mods.push(meta);
                 }
             }

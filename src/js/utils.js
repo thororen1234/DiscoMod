@@ -124,7 +124,7 @@ export async function ask(message, options = {}) {
   }
 
   titleEl.innerText = title;
-  bodyEl.innerText = message;
+  bodyEl.innerHTML = message;
   yesBtn.innerText = yesText;
   noBtn.innerText = noText;
 
@@ -168,7 +168,7 @@ export async function message(msg, options = {}) {
   if (!modal) return window.alert(msg);
 
   titleEl.innerText = title;
-  bodyEl.innerText = msg;
+  bodyEl.innerHTML = msg;
   yesBtn.innerText = okText;
   noBtn.style.display = 'none';
 

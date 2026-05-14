@@ -234,12 +234,12 @@
   <div id="title-bar" data-tauri-drag-region>
     <div id="title-bar-left" data-tauri-drag-region>
       <div class="nav-arrows" data-tauri-no-drag>
-        <button id="btn-nav-back" class="nav-arrow-btn" title="Back (Alt+Left)">
+        <button id="btn-nav-back" class="nav-arrow-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <button id="btn-nav-forward" class="nav-arrow-btn" title="Forward (Alt+Right)">
+        <button id="btn-nav-forward" class="nav-arrow-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6" />
           </svg>
@@ -305,13 +305,18 @@
 
         <div id="page-mods" class="page active">
           <div class="page-header">
-            <div class="header-main">
+            <div class="header-main" style="width: 100%;">
               <nav class="breadcrumb" id="mods-breadcrumb" style="display: none;">
                 <span class="breadcrumb-item" data-view="menu">Mods</span>
                 <span class="breadcrumb-separator">/</span>
                 <span class="breadcrumb-item active" id="mods-breadcrumb-current">Mod List</span>
               </nav>
-              <h1 class="page-title" id="mods-title">Mod Manager</h1>
+              <div style="display: flex; align-items: baseline; gap: 12px; flex: 1; justify-content: space-between;">
+                <h1 class="page-title" id="mods-title">Mod Manager</h1>
+                <div id="nexus-attribution" style="display: none; font-size: 11px; opacity: 0.7; white-space: nowrap;">
+                  Catalogue provided by <a href="#" data-external-url="https://nexusmods.com" style="color: var(--accent); text-decoration: none; font-weight: 600;">nexusmods.com</a>
+                </div>
+              </div>
               <div class="header-stats" id="mods-stats">0 mods</div>
             </div>
           </div>
@@ -431,33 +436,35 @@
 
 
             <div id="mods-view-list" class="page-view mods-view">
-              <div class="page-header" style="border:none; margin-bottom: 8px; padding-top: 0;">
-                <div class="header-actions" style="justify-content: flex-start; flex: 1;">
-                  <div class="search-wrap">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input type="text" autocomplete="off" id="mods-search" class="search-input"
-                      placeholder="Search mods..." />
-                  </div>
+              <div class="filter-bar">
+                <div class="search-wrap">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input type="text" autocomplete="off" id="mods-search" class="search-input"
+                    placeholder="Search mods..." />
+                </div>
+                <div class="sort-group">
                   <select id="mods-sort" class="sort-select">
                     <option value="name" selected>Name</option>
                     <option value="date">Date Added</option>
                     <option value="type">Type</option>
                   </select>
-                  <select id="mods-status-filter" class="sort-select">
-                    <option value="all">All Status</option>
-                    <option value="enabled">Enabled</option>
-                    <option value="disabled">Disabled</option>
-                  </select>
+                  <button id="mods-sort-order" class="sort-order-btn">
+                    <svg id="mods-sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                  </button>
                 </div>
-                <div class="header-actions">
-                  <button class="save-btn" id="btn-refresh-mods">Refresh</button>
-                  <button class="save-btn accent" id="btn-enable-all-mods">Enable All</button>
-                  <button class="save-btn danger" id="btn-disable-all-mods">Disable All</button>
-                </div>
+                <select id="mods-status-filter" class="sort-select">
+                  <option value="all">All Status</option>
+                  <option value="enabled">Enabled</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+                <button class="save-btn accent" id="btn-enable-all-mods">Enable All</button>
+                <button class="save-btn danger" id="btn-disable-all-mods">Disable All</button>
               </div>
 
               <div id="mods-bulk-actions" class="bulk-actions-bar" style="display: none;">
@@ -491,19 +498,28 @@
 
 
             <div id="mods-view-nexus" class="page-view mods-view">
-              <div class="page-header" style="border:none; margin-bottom: 12px; padding-top: 0;">
-                <div class="header-actions" style="justify-content: flex-start; flex: 1;">
-                  <div class="search-wrap" style="flex: 1;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input type="text" autocomplete="off" id="nexus-search" class="search-input"
-                      placeholder="Search Nexus Mods..." />
-                  </div>
-                  <button class="save-btn accent" id="nexus-search-btn">Search</button>
+              <div class="filter-bar">
+                <div class="search-wrap">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input type="text" autocomplete="off" id="nexus-search" class="search-input"
+                    placeholder="Search Nexus Mods..." />
                 </div>
+                <div class="sort-group">
+                  <select id="nexus-sort" class="sort-select">
+                    <option value="name" selected>Name</option>
+                    <option value="date">Date Added</option>
+                  </select>
+                  <button id="nexus-sort-order" class="sort-order-btn">
+                    <svg id="nexus-sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <button class="save-btn accent" id="nexus-search-btn">Search</button>
               </div>
               <div id="nexus-catalogue" class="grid-list">
                 <div class="dl-placeholder">Search for mods on Nexus to see them here.</div>
@@ -548,13 +564,18 @@
 
         <div id="page-songs" class="page">
           <div class="page-header">
-            <div class="header-main">
+            <div class="header-main" style="width: 100%;">
               <nav class="breadcrumb" id="songs-breadcrumb" style="display: none;">
                 <span class="breadcrumb-item" data-view="menu">Songs</span>
                 <span class="breadcrumb-separator">/</span>
                 <span class="breadcrumb-item active" id="songs-breadcrumb-current">Song List</span>
               </nav>
-              <h1 class="page-title" id="songs-title">Song Manager</h1>
+              <div style="display: flex; align-items: baseline; gap: 12px; flex: 1; justify-content: space-between;">
+                <h1 class="page-title" id="songs-title">Song Manager</h1>
+                <div id="songs-attribution" style="display: none; font-size: 11px; opacity: 0.7; white-space: nowrap;">
+                  Catalogue provided by <a href="#" data-external-url="https://discomaps.com" style="color: var(--accent); text-decoration: none; font-weight: 600;">discomaps.com</a>
+                </div>
+              </div>
               <div class="header-stats" id="songs-stats">0 songs</div>
             </div>
           </div>
@@ -622,26 +643,28 @@
 
 
             <div id="songs-view-list" class="page-view songs-view">
-              <div class="page-header" style="border:none; margin-bottom: 8px; padding-top: 0;">
-                <div class="header-actions" style="justify-content: flex-start; flex: 1;">
-                  <div class="search-wrap">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input type="text" autocomplete="off" id="songs-search" class="search-input"
-                      placeholder="Search songs..." />
-                  </div>
+              <div class="filter-bar">
+                <div class="search-wrap">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input type="text" autocomplete="off" id="songs-search" class="search-input"
+                    placeholder="Search songs..." />
+                </div>
+                <div class="sort-group">
                   <select id="songs-sort" class="sort-select">
                     <option value="name" selected>Name</option>
                     <option value="artist">Artist</option>
                     <option value="bpm">BPM</option>
                     <option value="date">Date Added</option>
                   </select>
-                </div>
-                <div class="header-actions">
-                  <button class="save-btn" id="btn-refresh-songs">Refresh</button>
+                  <button id="songs-sort-order" class="sort-order-btn">
+                    <svg id="songs-sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
@@ -665,19 +688,30 @@
 
 
             <div id="songs-view-downloader" class="page-view songs-view">
-              <div class="page-header" style="border:none; margin-bottom: 12px; padding-top: 0;">
-                <div class="header-actions" style="justify-content: flex-start; flex: 1;">
-                  <div class="search-wrap" style="flex: 1;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input type="text" autocomplete="off" id="dl-search" class="search-input"
-                      placeholder="Search Disco Maps catalogue..." />
-                  </div>
-                  <button class="save-btn accent" id="dl-fetch-btn">Fetch Catalogue</button>
+              <div class="filter-bar">
+                <div class="search-wrap">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input type="text" autocomplete="off" id="dl-search" class="search-input"
+                    placeholder="Search Disco Maps catalogue..." />
                 </div>
+                <div class="sort-group">
+                  <select id="dl-sort" class="sort-select">
+                    <option value="name" selected>Name</option>
+                    <option value="bpm">BPM</option>
+                    <option value="artist">Artist</option>
+                    <option value="date">Date Added</option>
+                  </select>
+                  <button id="dl-sort-order" class="sort-order-btn">
+                    <svg id="dl-sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <button class="save-btn accent" id="dl-fetch-btn">Fetch Catalogue</button>
               </div>
               <div id="dl-catalogue" class="grid-list">
                 <div class="dl-placeholder">Click 'Fetch' to see available custom maps from Disco Maps.</div>

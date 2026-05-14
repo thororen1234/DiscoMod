@@ -24,8 +24,14 @@ export async function loadConfig() {
       }
     }
     if (state.config.modsSort) $('mods-sort').value = state.config.modsSort;
+    if (state.config.modsSortOrder) {
+      $('mods-sort-order').classList.toggle('desc', state.config.modsSortOrder === 'desc');
+    }
     if (state.config.modsStatusFilter) $('mods-status-filter').value = state.config.modsStatusFilter;
     if (state.config.songsSort) $('songs-sort').value = state.config.songsSort;
+    if (state.config.songsSortOrder) {
+      $('songs-sort-order').classList.toggle('desc', state.config.songsSortOrder === 'desc');
+    }
   } catch (err) {
     console.error("Failed to load config:", err);
   }

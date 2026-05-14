@@ -1,5 +1,6 @@
 import { invoke, ask, openDialog } from './api.js';
 import { $, formatDate, formatSize, showToast, setStatus, showModal, closeModal, showImportSelectionModal } from './utils.js';
+import { saveConfig } from './config.js';
 import { state } from './state.js';
 
 export async function refreshMods(silent = false) {
@@ -22,6 +23,7 @@ export function renderMods() {
   const emptyState = $('mods-empty');
   const searchTerm = ($('mods-search')?.value || '').toLowerCase();
   const sortBy = $('mods-sort')?.value || 'name';
+  const sortOrder = $('mods-sort-order')?.classList.contains('desc') ? 'desc' : 'asc';
   const statusFilter = $('mods-status-filter')?.value || 'all';
 
   if (!container) return;
@@ -42,9 +44,13 @@ export function renderMods() {
   });
 
   filtered.sort((a, b) => {
-    if (sortBy === 'date') return (b.createdAt || 0) - (a.createdAt || 0);
-    if (sortBy === 'type') return (a.type || '').localeCompare(b.type || '');
-    return a.name.localeCompare(b.name);
+    let res = 0;
+    if (sortBy === 'date') res = (a.createdAt || 0) - (b.createdAt || 0);
+    else if (sortBy === 'type') res = (a.type || '').localeCompare(b.type || '');
+    else res = a.name.localeCompare(b.name);
+
+    if (sortOrder === 'desc') return -res;
+    return res;
   });
 
   if (filtered.length === 0) {
@@ -185,13 +191,19 @@ export function setupModsEvents() {
   $('mods-sort')?.addEventListener('change', () => {
     state.config.modsSort = $('mods-sort').value;
     renderMods();
+    saveConfig();
+  });
+  $('mods-sort-order')?.addEventListener('click', () => {
+    $('mods-sort-order').classList.toggle('desc');
+    state.config.modsSortOrder = $('mods-sort-order').classList.contains('desc') ? 'desc' : 'asc';
+    renderMods();
+    saveConfig();
   });
   $('mods-status-filter')?.addEventListener('change', () => {
     state.config.modsStatusFilter = $('mods-status-filter').value;
     renderMods();
+    saveConfig();
   });
-
-  $('btn-refresh-mods')?.addEventListener('click', () => refreshMods());
 
   $('btn-enable-all-mods')?.addEventListener('click', async () => {
     state.availableMods.forEach(mod => mod.enabled = true);
@@ -233,7 +245,7 @@ export function setupModsEvents() {
         for (const file of files) {
           const items = await invoke('scan_path_for_mods', { path: file });
           items.forEach(item => {
-            item.sourceFile = file; // Attach source file path
+            item.sourceFile = file;
           });
           allScannedItems = allScannedItems.concat(items);
         }
@@ -264,7 +276,6 @@ export function setupModsEvents() {
               internalPaths: [item.internal_path]
             });
           } else {
-            // Handle direct folder import if we ever support it via scan
             await invoke('import_mod_from_folder', { path: item.internal_path });
           }
         }

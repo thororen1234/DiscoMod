@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use tauri::command;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NexusMod {
     pub mod_id: u32,
     pub name: String,
@@ -12,6 +13,7 @@ pub struct NexusMod {
     pub version: String,
     pub author: String,
     pub picture_url: Option<String>,
+    pub updated_timestamp: u64,
 }
 
 const NEXUS_BASE_URL: &str = "https://api.nexusmods.com/v1";
@@ -72,6 +74,9 @@ pub async fn fetch_nexus_mods(api_key: String, query: String) -> Result<Vec<Nexu
                                         picture_url: m["picture_url"]
                                             .as_str()
                                             .map(|s| s.to_string()),
+                                        updated_timestamp: m["updated_timestamp"]
+                                            .as_u64()
+                                            .unwrap_or(0),
                                     });
                                 }
                             }
@@ -90,6 +95,7 @@ pub async fn download_nexus_mod(
     api_key: String,
     mod_id: u32,
     storage_path: String,
+    replace_path: Option<String>,
 ) -> Result<String, String> {
     if api_key.trim().is_empty() {
         return Err("Nexus API key required".to_string());
@@ -172,7 +178,15 @@ pub async fn download_nexus_mod(
     }
 
     let folder_name = safe_folder_name(file_name);
-    let dest_folder = unique_dest(&base, &folder_name);
+    let dest_folder = if let Some(p) = replace_path {
+        let path = PathBuf::from(p);
+        if path.exists() {
+            fs::remove_dir_all(&path).ok();
+        }
+        path
+    } else {
+        unique_dest(&base, &folder_name)
+    };
     fs::create_dir_all(&dest_folder).map_err(|e| e.to_string())?;
 
     let cursor = std::io::Cursor::new(bytes);
@@ -197,6 +211,19 @@ pub async fn download_nexus_mod(
             std::io::copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
         }
     }
+
+    let metadata = serde_json::json!({
+        "name": file_name,
+        "type": "other",
+        "enabled": false,
+        "nexusId": mod_id,
+        "createdAt": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(),
+    });
+    fs::write(
+        dest_folder.join("mod.json"),
+        serde_json::to_string_pretty(&metadata).unwrap_or_default(),
+    )
+    .ok();
 
     Ok(format!("Successfully installed Nexus mod: {}", file_name))
 }

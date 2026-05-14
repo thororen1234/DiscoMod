@@ -200,6 +200,7 @@ pub struct Song {
     pub unique_id: i64,
     pub seed: i64,
     pub created_at: i64,
+    pub discomaps_id: Option<String>,
     pub full_metadata: serde_json::Value,
 }
 
@@ -265,6 +266,7 @@ fn song_from_folder(folder: &Path) -> Option<Song> {
         unique_id: meta.unique_id,
         seed: meta.seed,
         created_at,
+        discomaps_id: meta.discomaps_id.clone(),
         full_metadata: full,
     })
 }
@@ -738,6 +740,7 @@ pub async fn fetch_song_catalogue(api_key: String) -> Result<Vec<serde_json::Val
 pub async fn download_song(
     map_entry: serde_json::Value,
     api_key: String,
+    replace_path: Option<String>,
 ) -> Result<String, String> {
     if api_key.trim().is_empty() {
         return Err("API key required".to_string());
@@ -764,26 +767,28 @@ pub async fn download_song(
         return Err("Invalid map entry: missing id and jUrl".to_string());
     }
 
-    if let Ok(entries) = fs::read_dir(&base) {
-        for entry in entries.flatten() {
-            let meta_path = entry.path().join("Meta.json");
-            if let Ok(data) = fs::read_to_string(&meta_path) {
-                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&data) {
-                    if val["discomapsId"].as_str() == Some(&map_id) {
-                        return Ok(format!("'{}' is already downloaded.", title));
-                    }
+    if replace_path.is_none() {
+        if let Ok(entries) = fs::read_dir(&base) {
+            for entry in entries.flatten() {
+                let meta_path = entry.path().join("Meta.json");
+                if let Ok(data) = fs::read_to_string(&meta_path) {
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&data) {
+                        if val["discomapsId"].as_str() == Some(&map_id) {
+                            return Ok(format!("'{}' is already downloaded.", title));
+                        }
 
-                    let s_title = val["songName"].as_str().unwrap_or("");
-                    let s_artist_val = &val["performedBy"];
+                        let s_title = val["songName"].as_str().unwrap_or("");
+                        let s_artist_val = &val["performedBy"];
 
-                    let artist_matches = if let Some(arr) = s_artist_val.as_array() {
-                        arr.iter().any(|v| v.as_str() == Some(&artist))
-                    } else {
-                        s_artist_val.as_str() == Some(&artist)
-                    };
+                        let artist_matches = if let Some(arr) = s_artist_val.as_array() {
+                            arr.iter().any(|v| v.as_str() == Some(&artist))
+                        } else {
+                            s_artist_val.as_str() == Some(&artist)
+                        };
 
-                    if s_title == title && artist_matches {
-                        return Ok(format!("'{}' is already installed.", title));
+                        if s_title == title && artist_matches {
+                            return Ok(format!("'{}' is already installed.", title));
+                        }
                     }
                 }
             }
@@ -791,7 +796,15 @@ pub async fn download_song(
     }
 
     let folder_name = safe_folder_name(&format!("{} - {}", artist, title));
-    let dest_folder = unique_dest(&base, &folder_name);
+    let dest_folder = if let Some(p) = replace_path {
+        let path = PathBuf::from(p);
+        if path.exists() {
+            fs::remove_dir_all(&path).ok();
+        }
+        path
+    } else {
+        unique_dest(&base, &folder_name)
+    };
     fs::create_dir_all(&dest_folder).map_err(|e| e.to_string())?;
 
     let client = reqwest::Client::new();

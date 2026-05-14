@@ -102,22 +102,32 @@ async function setupWindowControls() {
 }
 
 function switchPage(pageId, push = true) {
+  if (!pageId) return;
   const pages = document.querySelectorAll('.page');
   const navBtns = document.querySelectorAll('.nav-btn');
+
+  const currentState = history.state;
+  if (push && currentState && currentState.pageId === pageId && currentState.viewId === 'menu') {
+    return;
+  }
 
   pages.forEach(p => p.classList.toggle('active', p.id === `page-${pageId}`));
   navBtns.forEach(n => n.classList.toggle('active', n.dataset.page === pageId));
 
-
-  switchSubView(pageId, 'menu');
+  switchSubView(pageId, 'menu', false);
 
   if (push) {
-    history.pushState({ pageId }, '', `#${pageId}`);
+    history.pushState({ pageId, viewId: 'menu' }, '', `#${pageId}`);
   }
 }
 
-function switchSubView(pageId, viewId) {
-  if (!pageId) return;
+function switchSubView(pageId, viewId, push = true) {
+  if (!pageId || !viewId) return;
+
+  const currentState = history.state;
+  if (push && currentState && currentState.pageId === pageId && currentState.viewId === viewId) {
+    return;
+  }
 
   const views = document.querySelectorAll(`#page-${pageId} .page-view`);
   const breadcrumb = $(`${pageId}-breadcrumb`);
@@ -159,19 +169,29 @@ function switchSubView(pageId, viewId) {
     if (stats) stats.style.display = (viewId === 'list' || viewId === 'backups') ? 'block' : 'none';
     if (viewId === 'downloader') autoFetchCatalogue();
   }
+
+  if (pageId === 'songs') {
+    const attr = $('songs-attribution');
+    if (attr) attr.style.display = (viewId === 'downloader') ? 'block' : 'none';
+  } else if (pageId === 'mods') {
+    const attr = $('nexus-attribution');
+    if (attr) attr.style.display = (viewId === 'nexus') ? 'block' : 'none';
+  }
+
+  if (push) {
+    history.pushState({ pageId, viewId }, '', `#${pageId}/${viewId}`);
+  }
 }
 
 function setupMenuNavigation(pageId) {
   const container = $(`${pageId}-content`);
   if (!container) return;
 
-
   container.querySelectorAll('.menu-card[data-view]').forEach(card => {
     card.addEventListener('click', () => {
       switchSubView(pageId, card.dataset.view);
     });
   });
-
 
   const breadcrumb = $(`${pageId}-breadcrumb`);
   if (breadcrumb) {
@@ -193,15 +213,31 @@ function setupNavigation() {
 
   window.addEventListener('popstate', (e) => {
     if (e.state && e.state.pageId) {
-      switchPage(e.state.pageId, false);
+      const pages = document.querySelectorAll('.page');
+      const navBtns = document.querySelectorAll('.nav-btn');
+      pages.forEach(p => p.classList.toggle('active', p.id === `page-${e.state.pageId}`));
+      navBtns.forEach(n => n.classList.toggle('active', n.dataset.page === e.state.pageId));
+
+      switchSubView(e.state.pageId, e.state.viewId || 'menu', false);
     }
   });
 
+  window.addEventListener('mouseup', (e) => {
+    if (e.button === 3) history.back();
+    if (e.button === 4) history.forward();
+  });
   $('btn-nav-back')?.addEventListener('click', () => history.back());
   $('btn-nav-forward')?.addEventListener('click', () => history.forward());
 
-  const hash = window.location.hash.slice(1) || 'mods';
-  switchPage(hash, true);
+  const parts = window.location.hash.slice(1).split('/');
+  const pageId = parts[0] || 'mods';
+  const viewId = parts[1] || 'menu';
+  
+  switchPage(pageId, false);
+  if (viewId !== 'menu') {
+    switchSubView(pageId, viewId, false);
+  }
+  history.replaceState({ pageId, viewId }, '', window.location.hash || `#${pageId}`);
 }
 
 function setupExternalLinks() {

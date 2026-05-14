@@ -66,8 +66,8 @@
 .launch-btn:active { transform: translateY(0); }
 
 .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 0; white-space: nowrap; }
-.search-bar { display: flex; gap: 12px; flex-shrink: 0; margin-bottom: 24px; }
-.search-wrap { position: relative; display: flex; align-items: center; flex: 1; }
+.search-bar, .filter-bar { display: flex; gap: 16px; align-items: center; width: 100%; margin-bottom: 24px; }
+.search-wrap { position: relative; display: flex; align-items: center; flex: 1; min-width: 0; }
 .search-wrap svg { position: absolute; left: 16px; color: var(--text-dim); pointer-events: none; width: 18px; height: 18px; }
 .search-wrap .search-input { padding-left: 44px; }
 .search-input {
@@ -103,6 +103,45 @@
   background-position: right 12px center;
 }
 .sort-select:hover { border-color: var(--border-hover); color: var(--text-main); }
+
+.sort-order-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.sort-order-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-main);
+}
+.sort-order-btn svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sort-order-btn.desc svg {
+  transform: rotate(180deg);
+}
+
+.sort-group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.sort-group .sort-select {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.sort-group .sort-order-btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
 
 .icon-btn {
   display: flex; align-items: center; justify-content: center;
