@@ -64,7 +64,7 @@ export function setupConfigEvents() {
       btn.innerText = 'Show';
     }
   });
-  
+
   $('theme-select').addEventListener('change', (e) => {
     const theme = e.target.value;
     document.documentElement.setAttribute('data-theme', theme);

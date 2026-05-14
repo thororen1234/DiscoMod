@@ -75,15 +75,15 @@ let refreshInterval = null;
 function startAutoRefresh() {
   if (refreshInterval) clearInterval(refreshInterval);
   refreshInterval = setInterval(async () => {
-    
+
     if (document.hasFocus()) {
-      await refreshMods(true); 
+      await refreshMods(true);
       await refreshSongs(true);
       await refreshSaves(true);
       await refreshBackups(true);
       await loadCustomThemes(true);
     }
-  }, 10000); 
+  }, 10000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -108,9 +108,9 @@ function switchPage(pageId, push = true) {
   pages.forEach(p => p.classList.toggle('active', p.id === `page-${pageId}`));
   navBtns.forEach(n => n.classList.toggle('active', n.dataset.page === pageId));
 
-  
+
   switchSubView(pageId, 'menu');
-  
+
   if (push) {
     history.pushState({ pageId }, '', `#${pageId}`);
   }
@@ -118,7 +118,7 @@ function switchPage(pageId, push = true) {
 
 function switchSubView(pageId, viewId) {
   if (!pageId) return;
-  
+
   const views = document.querySelectorAll(`#page-${pageId} .page-view`);
   const breadcrumb = $(`${pageId}-breadcrumb`);
   const title = $(`${pageId}-title`);
@@ -155,7 +155,7 @@ function switchSubView(pageId, viewId) {
       currentBreadcrumb.innerText = viewName;
       if (title) title.innerText = viewName;
     }
-    
+
     if (stats) stats.style.display = (viewId === 'list' || viewId === 'backups') ? 'block' : 'none';
     if (viewId === 'downloader') autoFetchCatalogue();
   }
@@ -165,14 +165,14 @@ function setupMenuNavigation(pageId) {
   const container = $(`${pageId}-content`);
   if (!container) return;
 
-  
+
   container.querySelectorAll('.menu-card[data-view]').forEach(card => {
     card.addEventListener('click', () => {
       switchSubView(pageId, card.dataset.view);
     });
   });
 
-  
+
   const breadcrumb = $(`${pageId}-breadcrumb`);
   if (breadcrumb) {
     breadcrumb.querySelectorAll('.breadcrumb-item[data-view]').forEach(item => {
@@ -336,7 +336,8 @@ function setupUtilityEvents() {
 
   $('btn-open-config-dir')?.addEventListener('click', () => invoke('open_config_dir'));
   $('btn-open-themes-dir')?.addEventListener('click', () => invoke('open_themes_dir'));
-  
+  $('btn-open-saves-dir')?.addEventListener('click', () => invoke('open_saves_backup_dir'));
+
   $('btn-install-ue4ss-card')?.addEventListener('click', async () => {
     try {
       showToast("Downloading and installing UE4SS...", 'info');
@@ -357,7 +358,7 @@ function setupUtilityEvents() {
       showToast(`Uninstallation failed: ${err}`, 'error');
     }
   });
-  
+
   $('btn-launch')?.addEventListener('click', async () => {
     try {
       await invoke('launch_game');
@@ -458,7 +459,7 @@ function showUpdateModal() {
       $('modal-update-now').innerText = "Downloading...";
 
       await updateManifest.downloadAndInstall((event) => {
-        
+
       });
 
       showToast("Update installed! Restarting...", 'success');
@@ -485,12 +486,12 @@ $('btn-check-updates')?.addEventListener('click', () => {
 async function refreshUE4SSStatus() {
   const path = state.config.exePath || state.config.exe_path;
   if (!path) return;
-  
+
   try {
     const installed = await invoke('is_ue4ss_installed', { exePath: path });
     const installCard = $('btn-install-ue4ss-card');
     const uninstallCard = $('btn-uninstall-ue4ss-card');
-    
+
     if (installCard) installCard.style.display = installed ? 'none' : 'flex';
     if (uninstallCard) uninstallCard.style.display = installed ? 'flex' : 'none';
   } catch (e) {

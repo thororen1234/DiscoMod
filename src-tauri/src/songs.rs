@@ -16,7 +16,11 @@ pub fn scan_path_for_songs(path: String) -> Result<Vec<ScannedItem>, String> {
         for entry in walkdir::WalkDir::new(p).into_iter().flatten() {
             let path = entry.path();
             if path.is_dir() && is_valid_song_folder(path) {
-                let name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                let name = path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
                 items.push(ScannedItem {
                     name,
                     internal_path: path.to_string_lossy().to_string(),
@@ -34,20 +38,38 @@ pub fn scan_path_for_songs(path: String) -> Result<Vec<ScannedItem>, String> {
             let file = archive.by_index(i).map_err(|e| e.to_string())?;
             let name = file.name();
             if name.ends_with("Meta.json") {
-                let parent = Path::new(name).parent().unwrap_or(Path::new("")).to_str().unwrap_or("").to_string();
+                let parent = Path::new(name)
+                    .parent()
+                    .unwrap_or(Path::new(""))
+                    .to_str()
+                    .unwrap_or("")
+                    .to_string();
                 folders_with_meta.insert(parent);
             }
             if name.ends_with("Audio.ogg") {
-                let parent = Path::new(name).parent().unwrap_or(Path::new("")).to_str().unwrap_or("").to_string();
+                let parent = Path::new(name)
+                    .parent()
+                    .unwrap_or(Path::new(""))
+                    .to_str()
+                    .unwrap_or("")
+                    .to_string();
                 folders_with_audio.insert(parent);
             }
         }
 
         for folder in folders_with_meta.intersection(&folders_with_audio) {
             let display_name = if folder.is_empty() {
-                Path::new(&path).file_stem().unwrap_or_default().to_string_lossy().to_string()
+                Path::new(&path)
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()
             } else {
-                Path::new(folder).file_name().unwrap_or_default().to_string_lossy().to_string()
+                Path::new(folder)
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()
             };
             items.push(ScannedItem {
                 name: display_name,
@@ -80,16 +102,28 @@ pub fn import_songs_from_zip(
     let mut imported_count = 0;
     for internal_path in internal_paths {
         let folder_name = if internal_path.is_empty() {
-            Path::new(&zip_path).file_stem().unwrap_or_default().to_string_lossy().to_string()
+            Path::new(&zip_path)
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
         } else {
-            Path::new(&internal_path).file_name().unwrap_or_default().to_string_lossy().to_string()
+            Path::new(&internal_path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
         };
 
         let temp_dest = temp_base.join(&folder_name);
         fs::create_dir_all(&temp_dest).map_err(|e| e.to_string())?;
 
-        let prefix = if internal_path.is_empty() { "".to_string() } else { format!("{}/", internal_path) };
-        
+        let prefix = if internal_path.is_empty() {
+            "".to_string()
+        } else {
+            format!("{}/", internal_path)
+        };
+
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
             let name = file.name().to_string();

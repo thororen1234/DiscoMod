@@ -36,6 +36,7 @@ pub fn run() {
             mod_manager::launch_game,
             mod_manager::open_config_dir,
             mod_manager::open_themes_dir,
+            mod_manager::open_saves_backup_dir,
             mod_manager::list_themes,
             mod_manager::read_theme,
             mod_manager::install_ue4ss,

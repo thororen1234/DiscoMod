@@ -6,7 +6,7 @@ export async function refreshMods(silent = false) {
   if (!state.config.modsStoragePath) return;
   try {
     const newMods = await invoke('get_available_mods');
-    
+
     if (silent && JSON.stringify(newMods) === JSON.stringify(state.availableMods)) return;
 
     state.availableMods = newMods;
@@ -162,7 +162,7 @@ export function setupModsEvents() {
   });
 
   $('btn-refresh-mods')?.addEventListener('click', () => refreshMods());
-  
+
   $('btn-enable-all-mods')?.addEventListener('click', async () => {
     state.availableMods.forEach(mod => mod.enabled = true);
     renderMods();
@@ -177,7 +177,7 @@ export function setupModsEvents() {
     showToast("All mods disabled", 'success');
   });
 
-  
+
   $('btn-open-active-mods-dir')?.addEventListener('click', async () => {
     try { await invoke('open_active_mods_folder', { exePath: state.config.exePath }); } catch (e) { showToast(e, 'error'); }
   });
@@ -188,7 +188,7 @@ export function setupModsEvents() {
     try { await invoke('open_folder', { path: state.config.modsStoragePath }); } catch (e) { showToast(e, 'error'); }
   });
 
-  
+
   $('btn-add-mod')?.addEventListener('click', async () => {
     const files = await openDialog({
       multiple: true,
@@ -226,19 +226,19 @@ export function setupModsEvents() {
 
         setStatus('● ' + `Importing ${selectedItems.length} mod(s)...`);
         showModal('modal-loading');
-        
+
         for (const item of selectedItems) {
           if (item.sourceFile.toLowerCase().endsWith('.zip')) {
-             await invoke('import_mods_from_zip', { 
-               zipPath: item.sourceFile, 
-               internalPaths: [item.internal_path] 
-             });
+            await invoke('import_mods_from_zip', {
+              zipPath: item.sourceFile,
+              internalPaths: [item.internal_path]
+            });
           } else {
-             // Handle direct folder import if we ever support it via scan
-             await invoke('import_mod_from_folder', { path: item.internal_path });
+            // Handle direct folder import if we ever support it via scan
+            await invoke('import_mod_from_folder', { path: item.internal_path });
           }
         }
-        
+
         closeModal('modal-loading');
         showToast(`Imported ${selectedItems.length} mod(s)`, 'success');
         await refreshMods();
@@ -256,7 +256,7 @@ export function setupModsEvents() {
 
     const items = state.availableMods.map(m => ({ name: m.name, folderName: m.folderName }));
     const selected = await showImportSelectionModal("Select Mods to Export", items, "Export Selected");
-    
+
     if (!selected || selected.length === 0) {
       setStatus('● ' + "System ready");
       return;

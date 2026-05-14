@@ -19,7 +19,11 @@ pub fn scan_path_for_mods(path: String) -> Result<Vec<ScannedItem>, String> {
         for entry in walkdir::WalkDir::new(p).into_iter().flatten() {
             let path = entry.path();
             if path.is_file() {
-                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+                let ext = path
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("")
+                    .to_lowercase();
                 if valid_ext.contains(&ext.as_str()) {
                     found = true;
                     break;
@@ -28,7 +32,11 @@ pub fn scan_path_for_mods(path: String) -> Result<Vec<ScannedItem>, String> {
         }
         if found {
             items.push(ScannedItem {
-                name: p.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                name: p
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
                 internal_path: p.to_string_lossy().to_string(),
             });
         }
@@ -42,16 +50,29 @@ pub fn scan_path_for_mods(path: String) -> Result<Vec<ScannedItem>, String> {
             let name = file.name();
             let lower = name.to_lowercase();
             if valid_ext.iter().any(|ext| lower.ends_with(ext)) {
-                let parent = Path::new(name).parent().unwrap_or(Path::new("")).to_str().unwrap_or("").to_string();
+                let parent = Path::new(name)
+                    .parent()
+                    .unwrap_or(Path::new(""))
+                    .to_str()
+                    .unwrap_or("")
+                    .to_string();
                 folders_with_mods.insert(parent);
             }
         }
 
         for folder in folders_with_mods {
             let display_name = if folder.is_empty() {
-                Path::new(&path).file_stem().unwrap_or_default().to_string_lossy().to_string()
+                Path::new(&path)
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()
             } else {
-                Path::new(&folder).file_name().unwrap_or_default().to_string_lossy().to_string()
+                Path::new(&folder)
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()
             };
             items.push(ScannedItem {
                 name: display_name,
@@ -86,16 +107,28 @@ pub fn import_mods_from_zip(
     let mut imported_count = 0;
     for internal_path in internal_paths {
         let folder_name = if internal_path.is_empty() {
-            Path::new(&zip_path).file_stem().unwrap_or_default().to_string_lossy().to_string()
+            Path::new(&zip_path)
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
         } else {
-            Path::new(&internal_path).file_name().unwrap_or_default().to_string_lossy().to_string()
+            Path::new(&internal_path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
         };
 
         let temp_dest = temp_base.join(&folder_name);
         fs::create_dir_all(&temp_dest).map_err(|e| e.to_string())?;
 
-        let prefix = if internal_path.is_empty() { "".to_string() } else { format!("{}/", internal_path) };
-        
+        let prefix = if internal_path.is_empty() {
+            "".to_string()
+        } else {
+            format!("{}/", internal_path)
+        };
+
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
             let name = file.name().to_string();
@@ -117,7 +150,11 @@ pub fn import_mods_from_zip(
         for entry in walkdir::WalkDir::new(&temp_dest).into_iter().flatten() {
             let p = entry.path().to_path_buf();
             if p.is_file() {
-                let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+                let ext = p
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("")
+                    .to_lowercase();
                 if valid_ext.contains(&ext.as_str()) {
                     found_files.push(p);
                 }
@@ -141,8 +178,13 @@ pub fn import_mods_from_zip(
                 fs::copy(f, &dest).ok();
             }
 
-            let metadata = serde_json::json!({ "name": folder_name, "type": mod_type, "enabled": false });
-            fs::write(target_dir.join("mod.json"), serde_json::to_string_pretty(&metadata).unwrap()).ok();
+            let metadata =
+                serde_json::json!({ "name": folder_name, "type": mod_type, "enabled": false });
+            fs::write(
+                target_dir.join("mod.json"),
+                serde_json::to_string_pretty(&metadata).unwrap(),
+            )
+            .ok();
             imported_count += 1;
         }
     }
@@ -334,6 +376,12 @@ pub fn open_themes_dir() -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn open_saves_backup_dir() -> Result<(), String> {
+    let path = config_dir().join("saves");
+    open_folder(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 pub fn list_themes() -> Result<Vec<(String, String)>, String> {
     let path = config_dir().join("themes");
     if !path.exists() {
@@ -440,8 +488,8 @@ pub fn is_ue4ss_installed(exe_path: String) -> bool {
         return false;
     }
     if let Some(win64_dir) = crate::utils::find_win64_dir(&exe_path) {
-        return win64_dir.join("UE4SS.dll").exists() 
-            || win64_dir.join("dwmapi.dll").exists() 
+        return win64_dir.join("UE4SS.dll").exists()
+            || win64_dir.join("dwmapi.dll").exists()
             || win64_dir.join("xinput1_3.dll").exists();
     }
     false
@@ -453,8 +501,8 @@ pub fn uninstall_ue4ss(exe_path: String) -> Result<String, String> {
         return Err("No game executable selected".to_string());
     }
 
-    let win64_dir = crate::utils::find_win64_dir(&exe_path)
-        .ok_or("Could not find Win64 directory.")?;
+    let win64_dir =
+        crate::utils::find_win64_dir(&exe_path).ok_or("Could not find Win64 directory.")?;
 
     let files_to_remove = [
         "UE4SS.dll",
@@ -474,9 +522,11 @@ pub fn uninstall_ue4ss(exe_path: String) -> Result<String, String> {
         let path = win64_dir.join(file_name);
         if path.exists() {
             if path.is_dir() {
-                fs::remove_dir_all(&path).map_err(|e| format!("Failed to remove {}: {}", file_name, e))?;
+                fs::remove_dir_all(&path)
+                    .map_err(|e| format!("Failed to remove {}: {}", file_name, e))?;
             } else {
-                fs::remove_file(&path).map_err(|e| format!("Failed to remove {}: {}", file_name, e))?;
+                fs::remove_file(&path)
+                    .map_err(|e| format!("Failed to remove {}: {}", file_name, e))?;
             }
             removed_count += 1;
         }

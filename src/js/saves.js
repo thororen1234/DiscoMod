@@ -30,10 +30,10 @@ export function renderSaves() {
   const container = $('game-saves-list');
   const editorContainer = $('editor-saves-list');
   if (!container && !editorContainer) return;
-  
+
   if (container) container.innerHTML = '';
   if (editorContainer) editorContainer.innerHTML = '';
-  
+
   const stats = $('saves-stats');
   if (stats) stats.innerText = `${state.availableSaves.length} saves`;
 
@@ -220,7 +220,7 @@ export function setupSavesEvents() {
       const key = input.dataset.key;
       const type = input.dataset.type;
       let val;
-      
+
       try {
         if (type === 'Bool') {
           val = input.checked;
@@ -229,11 +229,11 @@ export function setupSavesEvents() {
         } else if (type === 'Str' || type === 'Name') {
           val = input.value;
         } else {
-          
+
           val = JSON.parse(input.value);
         }
-        
-        
+
+
         updates[key] = { [type]: val };
       } catch (e) {
         console.error(`Error parsing property ${key}:`, e);
@@ -295,10 +295,10 @@ function renderSaveProperties(data) {
   }
 
   filtered.forEach(([key, val]) => {
-    
+
     const type = Object.keys(val)[0];
     const actualValue = val[type];
-    
+
     const item = document.createElement('div');
     item.className = 'dl-item';
     item.style.padding = '12px';
@@ -320,7 +320,7 @@ function renderSaveProperties(data) {
     } else if (type === 'Str' || type === 'Name') {
       inputHtml = `<input type="text" class="form-input save-editor-input" data-key="${key}" data-type="${type}" value="${actualValue}" style="width:100%; height:32px;">`;
     } else {
-      
+
       const jsonStr = JSON.stringify(actualValue, null, 2);
       inputHtml = `<textarea class="form-input save-editor-input" data-key="${key}" data-type="${type}" style="width:100%; height:120px; font-family:monospace; font-size:11px; padding:8px;">${jsonStr}</textarea>`;
     }

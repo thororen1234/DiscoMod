@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,9 +8,11 @@
   <meta name="description" content="DiscoMod - Manage your game mods and custom songs." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <div class="modal-overlay" id="modal-confirm" aria-modal="true" role="dialog" aria-hidden="true">
     <div class="modal">
@@ -106,14 +109,20 @@
       <div class="modal-body">
         <div class="form-group">
           <div class="search-wrap" style="width: 100%; margin-bottom: 12px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" autocomplete="off" id="save-editor-search" class="search-input" placeholder="Search properties..." style="width: 100%; max-width: none;" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" autocomplete="off" id="save-editor-search" class="search-input"
+              placeholder="Search properties..." style="width: 100%; max-width: none;" />
           </div>
         </div>
         <div id="save-editor-list" class="item-list" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
-          
+
         </div>
-        <p class="meta-help">Editing properties will directly modify the binary save file. Only basic types (Int, Float, Bool, String) are editable.</p>
+        <p class="meta-help">Editing properties will directly modify the binary save file. Only basic types (Int, Float,
+          Bool, String) are editable.</p>
       </div>
       <div class="modal-actions">
         <button class="modal-btn" id="modal-save-editor-cancel">Cancel</button>
@@ -175,7 +184,8 @@
       <div class="modal-body">
         <p>Direct API downloads require a <strong>Nexus Premium</strong> account.</p>
         <div class="changelog-box">
-          Nexus Mods restricts automated API downloads to Premium members only. Free users must download files manually through the browser.
+          Nexus Mods restricts automated API downloads to Premium members only. Free users must download files manually
+          through the browser.
         </div>
         <p style="margin-top: 16px;">Would you like to open the manual download page instead?</p>
       </div>
@@ -190,7 +200,8 @@
     <div class="modal modal-wide">
       <div class="modal-title" id="import-selection-title">Select Items to Import</div>
       <div class="modal-body">
-        <div class="selection-header" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+        <div class="selection-header"
+          style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
           <label class="checkbox-container">
             <input type="checkbox" id="import-select-all" checked>
             <span class="checkmark"></span>
@@ -213,8 +224,8 @@
       <div class="loading-text" id="loading-text">
         Loading...
         <br />
-        The app might say not responding don't worry, it's still working. 
-        <br/>
+        The app might say not responding don't worry, it's still working.
+        <br />
         Just hang tight and don't close the window.
       </div>
     </div>
@@ -224,10 +235,14 @@
     <div id="title-bar-left" data-tauri-drag-region>
       <div class="nav-arrows" data-tauri-no-drag>
         <button id="btn-nav-back" class="nav-arrow-btn" title="Back (Alt+Left)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
         </button>
         <button id="btn-nav-forward" class="nav-arrow-btn" title="Forward (Alt+Right)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </button>
       </div>
       <span id="title-bar-text" data-tauri-drag-region>DISCOMOD</span>
@@ -237,13 +252,19 @@
       <button id="btn-check-updates" class="title-action-btn" title="Check for updates">Check for Updates</button>
       <div class="window-controls">
         <button class="window-btn" id="btn-minimize" title="Minimize">
-          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="0" y="5" width="10" height="1" fill="currentColor"/></svg>
+          <svg width="10" height="10" viewBox="0 0 10 10">
+            <rect x="0" y="5" width="10" height="1" fill="currentColor" />
+          </svg>
         </button>
         <button class="window-btn" id="btn-maximize" title="Maximize">
-          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+          <svg width="10" height="10" viewBox="0 0 10 10">
+            <rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1" />
+          </svg>
         </button>
         <button class="window-btn close-btn" id="btn-close" title="Close">
-          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1,1 L9,9 M9,1 L1,9" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+          <svg width="10" height="10" viewBox="0 0 10 10">
+            <path d="M1,1 L9,9 M9,1 L1,9" stroke="currentColor" stroke-width="1" fill="none" />
+          </svg>
         </button>
       </div>
     </div>
@@ -266,8 +287,13 @@
 
       <div class="sidebar-spacer"></div>
 
-      <a href="#" class="sidebar-footer-link" id="link-support-discomaps" data-external-url="https://discomaps.com?tab=supporter">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <a href="#" class="sidebar-footer-link" id="link-support-discomaps"
+        data-external-url="https://discomaps.com?tab=supporter">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
         Support Discomaps
       </a>
 
@@ -276,7 +302,7 @@
 
     <main id="main-content">
       <div id="pages-container">
-        
+
         <div id="page-mods" class="page active">
           <div class="page-header">
             <div class="header-main">
@@ -291,12 +317,17 @@
           </div>
 
           <div id="mods-content">
-            
+
             <div id="mods-view-menu" class="page-view mods-view active">
               <div class="menu-grid">
                 <div class="menu-card" data-view="list">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="7" height="7" />
+                      <rect x="14" y="3" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" />
+                      <rect x="3" y="14" width="7" height="7" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Available Mods</div>
@@ -306,7 +337,9 @@
 
                 <div class="menu-card" data-view="nexus">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Browse Nexus</div>
@@ -316,7 +349,11 @@
 
                 <div class="menu-card" data-view="importers">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Import & Export</div>
@@ -326,7 +363,9 @@
 
                 <div class="menu-card action-card" id="btn-open-active-mods-dir">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Open Mods Folder</div>
@@ -336,7 +375,9 @@
 
                 <div class="menu-card action-card" id="btn-open-logic-mods-dir">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Open Logic Mods Folder</div>
@@ -346,7 +387,9 @@
 
                 <div class="menu-card action-card" id="btn-open-storage-dir">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Open Mod Storage</div>
@@ -356,7 +399,10 @@
 
                 <div class="menu-card action-card" id="btn-install-ue4ss-card">
                   <div class="menu-card-icon" style="background: rgba(234, 179, 8, 0.15); color: #eab308;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Install UE4SS</div>
@@ -366,7 +412,14 @@
 
                 <div class="menu-card action-card" id="btn-uninstall-ue4ss-card" style="display: none;">
                   <div class="menu-card-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Uninstall UE4SS</div>
@@ -376,13 +429,18 @@
               </div>
             </div>
 
-            
+
             <div id="mods-view-list" class="page-view mods-view">
               <div class="page-header" style="border:none; margin-bottom: 8px; padding-top: 0;">
                 <div class="header-actions" style="justify-content: flex-start; flex: 1;">
                   <div class="search-wrap">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" autocomplete="off" id="mods-search" class="search-input" placeholder="Search mods..." />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" autocomplete="off" id="mods-search" class="search-input"
+                      placeholder="Search mods..." />
                   </div>
                   <select id="mods-sort" class="sort-select">
                     <option value="name" selected>Name</option>
@@ -415,13 +473,18 @@
               </div>
             </div>
 
-            
+
             <div id="mods-view-nexus" class="page-view mods-view">
               <div class="page-header" style="border:none; margin-bottom: 12px; padding-top: 0;">
                 <div class="header-actions" style="justify-content: flex-start; flex: 1;">
                   <div class="search-wrap" style="flex: 1;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" autocomplete="off" id="nexus-search" class="search-input" placeholder="Search Nexus Mods..." />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" autocomplete="off" id="nexus-search" class="search-input"
+                      placeholder="Search Nexus Mods..." />
                   </div>
                   <button class="save-btn accent" id="nexus-search-btn">Search</button>
                 </div>
@@ -431,12 +494,16 @@
               </div>
             </div>
 
-            
+
             <div id="mods-view-importers" class="page-view mods-view">
               <div class="menu-grid" style="margin-bottom: 24px;">
                 <div class="menu-card" id="btn-add-mod">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Import Mods</div>
@@ -446,7 +513,11 @@
 
                 <div class="menu-card" id="btn-export-mods">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Export All Mods</div>
@@ -458,7 +529,7 @@
           </div>
         </div>
 
-        
+
         <div id="page-songs" class="page">
           <div class="page-header">
             <div class="header-main">
@@ -473,12 +544,16 @@
           </div>
 
           <div id="songs-content">
-            
+
             <div id="songs-view-menu" class="page-view songs-view active">
               <div class="menu-grid">
                 <div class="menu-card" data-view="list">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 18V5l12-2v13" />
+                      <circle cx="6" cy="18" r="3" />
+                      <circle cx="18" cy="16" r="3" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Custom Songs</div>
@@ -488,7 +563,11 @@
 
                 <div class="menu-card" data-view="downloader">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Song Downloader</div>
@@ -498,7 +577,12 @@
 
                 <div class="menu-card" data-view="importers">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="12" y1="18" x2="12" y2="12" />
+                      <polyline points="9 15 12 12 15 15" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Import & Export</div>
@@ -508,7 +592,9 @@
 
                 <div class="menu-card action-card" id="btn-open-songs-dir">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Open Songs Folder</div>
@@ -518,13 +604,18 @@
               </div>
             </div>
 
-            
+
             <div id="songs-view-list" class="page-view songs-view">
               <div class="page-header" style="border:none; margin-bottom: 8px; padding-top: 0;">
                 <div class="header-actions" style="justify-content: flex-start; flex: 1;">
                   <div class="search-wrap">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" autocomplete="off" id="songs-search" class="search-input" placeholder="Search songs..." />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" autocomplete="off" id="songs-search" class="search-input"
+                      placeholder="Search songs..." />
                   </div>
                   <select id="songs-sort" class="sort-select">
                     <option value="name" selected>Name</option>
@@ -543,13 +634,18 @@
               </div>
             </div>
 
-            
+
             <div id="songs-view-downloader" class="page-view songs-view">
               <div class="page-header" style="border:none; margin-bottom: 12px; padding-top: 0;">
                 <div class="header-actions" style="justify-content: flex-start; flex: 1;">
                   <div class="search-wrap" style="flex: 1;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" autocomplete="off" id="dl-search" class="search-input" placeholder="Search Disco Maps catalogue..." />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" autocomplete="off" id="dl-search" class="search-input"
+                      placeholder="Search Disco Maps catalogue..." />
                   </div>
                   <button class="save-btn accent" id="dl-fetch-btn">Fetch Catalogue</button>
                 </div>
@@ -559,12 +655,16 @@
               </div>
             </div>
 
-            
+
             <div id="songs-view-importers" class="page-view songs-view">
               <div class="menu-grid" style="margin-bottom: 24px;">
                 <div class="menu-card" id="btn-import-song">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Import Songs</div>
@@ -574,7 +674,11 @@
 
                 <div class="menu-card" id="btn-export-songs">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Export All Songs</div>
@@ -586,7 +690,7 @@
           </div>
         </div>
 
-        
+
         <div id="page-saves" class="page">
           <div class="page-header">
             <div class="header-main">
@@ -599,14 +703,18 @@
               <div class="header-stats" id="saves-stats">0 saves</div>
             </div>
           </div>
-          
+
           <div id="saves-content">
-            
+
             <div id="saves-view-menu" class="page-view saves-view active">
               <div class="menu-grid">
                 <div class="menu-card" data-view="backups">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Backups & Recovery</div>
@@ -616,7 +724,12 @@
 
                 <div class="menu-card" data-view="importers">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="12" y1="18" x2="12" y2="12" />
+                      <polyline points="9 15 12 12 15 15" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Importer & Exporter</div>
@@ -626,7 +739,10 @@
 
                 <div class="menu-card" data-view="editor">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Save Editor</div>
@@ -636,7 +752,7 @@
               </div>
             </div>
 
-            
+
             <div id="saves-view-backups" class="page-view saves-view">
               <div class="save-management-layout">
                 <div class="save-column">
@@ -650,12 +766,16 @@
               </div>
             </div>
 
-            
+
             <div id="saves-view-importers" class="page-view saves-view">
               <div class="menu-grid">
                 <div class="menu-card" id="btn-import-save-card">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Import Save File</div>
@@ -665,7 +785,11 @@
 
                 <div class="menu-card" id="btn-export-saves">
                   <div class="menu-card-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </div>
                   <div class="menu-card-info">
                     <div class="menu-card-title">Export All Saves</div>
@@ -676,13 +800,14 @@
               <div id="import-results"></div>
             </div>
 
-            
+
             <div id="saves-view-editor" class="page-view saves-view">
               <div class="save-management-layout">
                 <div class="save-column" style="width: 100%; max-width: none;">
                   <h3 class="column-title">Select a Save to Edit</h3>
                   <div id="editor-saves-list" class="save-list"></div>
-                  <p class="meta-help" style="margin-top: 16px;">Note: You can also edit any save by clicking the 'Edit' button in the Backups tab.</p>
+                  <p class="meta-help" style="margin-top: 16px;">Note: You can also edit any save by clicking the 'Edit'
+                    button in the Backups tab.</p>
                 </div>
               </div>
             </div>
@@ -693,7 +818,7 @@
           <div class="page-header">
             <div class="page-title">General Settings</div>
           </div>
-          
+
           <div class="settings-grid">
             <section class="settings-section">
               <div class="settings-section-title">Paths & Storage</div>
@@ -710,7 +835,8 @@
               <div class="form-group" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 24px;">
                 <label class="form-label">Mods Storage Folder</label>
                 <div class="storage-row">
-                  <input type="text" id="storage-input" class="form-input" readonly placeholder="Select mods storage folder..." />
+                  <input type="text" id="storage-input" class="form-input" readonly
+                    placeholder="Select mods storage folder..." />
                   <div class="storage-actions">
                     <button class="modal-btn" id="storage-browse-btn">Browse</button>
                   </div>
@@ -724,25 +850,31 @@
               <div class="form-group">
                 <label class="form-label">Disco Maps API Key</label>
                 <div class="api-key-row">
-                  <input type="password" id="dl-api-key-input" class="form-input" placeholder="Enter Disco Maps API Key..." />
+                  <input type="password" id="dl-api-key-input" class="form-input"
+                    placeholder="Enter Disco Maps API Key..." />
                   <div class="api-key-actions">
                     <button class="modal-btn" id="btn-toggle-api-key">Show</button>
                     <button class="modal-btn accent" id="dl-save-key-btn">Save Key</button>
                   </div>
                 </div>
-                <p class="meta-help">Required for fetching the song catalogue. Get yours at <a href="#" class="meta-link" id="link-discomaps-api" data-external-url="https://discomaps.com/?tab=user">discomaps.com</a></p>
+                <p class="meta-help">Required for fetching the song catalogue. Get yours at <a href="#"
+                    class="meta-link" id="link-discomaps-api"
+                    data-external-url="https://discomaps.com/?tab=user">discomaps.com</a></p>
               </div>
 
               <div class="form-group" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 24px;">
                 <label class="form-label">Nexus API Key</label>
                 <div class="api-key-row">
-                  <input type="password" id="nexus-api-key-input" class="form-input" placeholder="Enter Nexus Personal API Key..." />
+                  <input type="password" id="nexus-api-key-input" class="form-input"
+                    placeholder="Enter Nexus Personal API Key..." />
                   <div class="api-key-actions">
                     <button class="modal-btn" id="btn-toggle-nexus-key">Show</button>
                     <button class="modal-btn accent" id="nexus-save-key-btn">Save Key</button>
                   </div>
                 </div>
-                <p class="meta-help">Required for browsing and downloading mods. Get yours at <a href="#" class="meta-link" id="link-nexus-api" data-external-url="https://www.nexusmods.com/settings/api-keys">nexusmods.com</a></p>
+                <p class="meta-help">Required for browsing and downloading mods. Get yours at <a href="#"
+                    class="meta-link" id="link-nexus-api"
+                    data-external-url="https://www.nexusmods.com/settings/api-keys">nexusmods.com</a></p>
               </div>
             </section>
 
@@ -753,7 +885,10 @@
                 <div class="custom-select" id="theme-custom-select">
                   <div class="custom-select-trigger" id="theme-trigger">
                     <span id="theme-current-label">Midnight (Default)</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
                   </div>
                   <div class="custom-options-panel" id="theme-options">
                     <div class="custom-option-group">Dark Themes</div>
@@ -769,7 +904,7 @@
                     <div class="custom-option" data-value="purple">Amethyst Purple</div>
                     <div class="custom-option" data-value="orange">Sunset Orange</div>
                     <div class="custom-option" data-value="monokai">Monokai</div>
-                    
+
                     <div class="custom-option-group">Light Themes</div>
                     <div class="custom-option" data-value="light">Pure Light</div>
                     <div class="custom-option" data-value="arctic">Arctic Blue</div>
@@ -821,6 +956,7 @@
               <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
                 <button class="action-btn" id="btn-open-config-dir">Open Config Folder</button>
                 <button class="action-btn" id="btn-open-themes-dir">Open Themes Folder</button>
+                <button class="action-btn" id="btn-open-saves-dir">Open Saves Folder</button>
                 <p class="meta-help">Access your settings and custom CSS theme files.</p>
               </div>
             </section>
@@ -835,4 +971,5 @@
   <div id="toast-container"></div>
   <script type="module" src="main.js"></script>
 </body>
+
 </html>

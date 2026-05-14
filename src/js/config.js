@@ -45,7 +45,7 @@ export async function loadCustomThemes(silent = false) {
     const themes = await invoke('list_themes');
     if (!themes || !Array.isArray(themes)) return;
 
-    
+
     if (silent && state.availableThemes && JSON.stringify(themes) === JSON.stringify(state.availableThemes)) return;
     state.availableThemes = themes;
 
@@ -63,7 +63,7 @@ export async function loadCustomThemes(silent = false) {
     for (const theme of themes) {
       if (!Array.isArray(theme) || theme.length < 2) continue;
       const [name, path] = theme;
-      
+
       try {
         const cssContent = await invoke('read_theme', { path });
         const style = document.createElement('style');

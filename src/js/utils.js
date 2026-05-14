@@ -57,11 +57,11 @@ export async function showImportSelectionModal(title, items, confirmText = "Impo
 
   const confirmBtn = $('modal-import-selection-confirm');
   if (confirmBtn) confirmBtn.innerText = confirmText;
-  
+
   const list = $('import-selection-list');
   if (!list) return null;
   list.innerHTML = '';
-  
+
   items.forEach((item, index) => {
     const itemEl = document.createElement('div');
     itemEl.className = 'selection-item';
@@ -76,11 +76,11 @@ export async function showImportSelectionModal(title, items, confirmText = "Impo
     `;
     list.appendChild(itemEl);
   });
-  
+
   showModal('modal-import-selection');
   const selectAll = $('import-select-all');
   if (selectAll) selectAll.checked = true;
-  
+
   return new Promise((resolve) => {
     const onConfirm = () => {
       const selected = [];
@@ -90,18 +90,18 @@ export async function showImportSelectionModal(title, items, confirmText = "Impo
       cleanup();
       resolve(selected);
     };
-    
+
     const onCancel = () => {
       cleanup();
       resolve(null);
     };
-    
+
     const cleanup = () => {
       $('modal-import-selection-confirm').removeEventListener('click', onConfirm);
       $('modal-import-selection-cancel').removeEventListener('click', onCancel);
       closeModal('modal-import-selection');
     };
-    
+
     $('modal-import-selection-confirm').addEventListener('click', onConfirm);
     $('modal-import-selection-cancel').addEventListener('click', onCancel);
   });

@@ -56,8 +56,7 @@ pub fn list_game_saves() -> Result<Vec<SaveFile>, String> {
                     .and_then(|n| n.to_str())
                     .unwrap_or("")
                     .to_string();
-                
-                
+
                 if name == "steam_autocloud.vdf" || !name.ends_with(".sav") {
                     continue;
                 }
@@ -216,15 +215,19 @@ fn backup_all_active_saves() -> Result<(), String> {
             let path = entry.path();
             if path.is_file() {
                 let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                
-                if filename.len() > 20 && filename.chars().take(10).all(|c| c.is_numeric() || c == '-') {
+
+                if filename.len() > 20
+                    && filename
+                        .chars()
+                        .take(10)
+                        .all(|c| c.is_numeric() || c == '-')
+                {
                     continue;
                 }
                 if filename.ends_with(".bak") {
                     continue;
                 }
 
-                
                 let _ = backup_save(path.to_string_lossy().to_string());
             }
         }
@@ -239,46 +242,43 @@ pub fn import_save(path: String) -> Result<String, String> {
         return Err("Source file does not exist".to_string());
     }
 
-    
     let _ = backup_all_active_saves();
 
     let original_name = source
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or("Invalid filename")?;
-    
+
     let now = Local::now();
     let timestamp = now.format("%Y-%m-%d-%H-%M-%S").to_string();
     let new_name = format!("{}-{}", timestamp, original_name);
-    
+
     let dest_dir = get_game_saves_dir();
     if !dest_dir.exists() {
         fs::create_dir_all(&dest_dir).map_err(|e| e.to_string())?;
     }
-    
+
     let dest = dest_dir.join(&new_name);
     fs::copy(source, dest).map_err(|e| e.to_string())?;
-    
+
     Ok(new_name)
 }
 #[tauri::command]
 pub fn read_save_data(path: String) -> Result<serde_json::Value, String> {
     let mut file = fs::File::open(&path).map_err(|e| e.to_string())?;
     let save = uesave::Save::read(&mut file).map_err(|e| e.to_string())?;
-    
-    
+
     let mut map = serde_json::Map::new();
     for (name, property) in &save.root.properties {
         let key = format!("{}_{}", name.1, name.0);
         let val = serde_json::to_value(property).map_err(|e| e.to_string())?;
         map.insert(key, val);
     }
-    
+
     Ok(serde_json::Value::Object(map))
 }
 
 fn update_property_from_json(prop: &mut uesave::Property, val: &serde_json::Value) {
-    
     let actual_val = if let Some(obj) = val.as_object() {
         if obj.len() == 1 {
             obj.values().next().unwrap()
@@ -290,13 +290,41 @@ fn update_property_from_json(prop: &mut uesave::Property, val: &serde_json::Valu
     };
 
     match prop {
-        uesave::Property::Int(ref mut v) => { if let Some(n) = actual_val.as_i64() { *v = n as i32; } }
-        uesave::Property::Int64(ref mut v) => { if let Some(n) = actual_val.as_i64() { *v = n; } }
-        uesave::Property::UInt32(ref mut v) => { if let Some(n) = actual_val.as_u64() { *v = n as u32; } }
-        uesave::Property::Float(ref mut v) => { if let Some(n) = actual_val.as_f64() { v.0 = n as f32; } }
-        uesave::Property::Double(ref mut v) => { if let Some(n) = actual_val.as_f64() { v.0 = n; } }
-        uesave::Property::Bool(ref mut v) => { if let Some(b) = actual_val.as_bool() { *v = b; } }
-        uesave::Property::Str(ref mut v) | uesave::Property::Name(ref mut v) => { if let Some(s) = actual_val.as_str() { *v = s.to_string(); } }
+        uesave::Property::Int(ref mut v) => {
+            if let Some(n) = actual_val.as_i64() {
+                *v = n as i32;
+            }
+        }
+        uesave::Property::Int64(ref mut v) => {
+            if let Some(n) = actual_val.as_i64() {
+                *v = n;
+            }
+        }
+        uesave::Property::UInt32(ref mut v) => {
+            if let Some(n) = actual_val.as_u64() {
+                *v = n as u32;
+            }
+        }
+        uesave::Property::Float(ref mut v) => {
+            if let Some(n) = actual_val.as_f64() {
+                v.0 = n as f32;
+            }
+        }
+        uesave::Property::Double(ref mut v) => {
+            if let Some(n) = actual_val.as_f64() {
+                v.0 = n;
+            }
+        }
+        uesave::Property::Bool(ref mut v) => {
+            if let Some(b) = actual_val.as_bool() {
+                *v = b;
+            }
+        }
+        uesave::Property::Str(ref mut v) | uesave::Property::Name(ref mut v) => {
+            if let Some(s) = actual_val.as_str() {
+                *v = s.to_string();
+            }
+        }
         uesave::Property::Struct(s) => {
             if let uesave::StructValue::Struct(props) = s {
                 if let Some(obj) = actual_val.as_object() {
@@ -315,19 +343,31 @@ fn update_property_from_json(prop: &mut uesave::Property, val: &serde_json::Valu
             if let Some(arr) = actual_val.as_array() {
                 match a {
                     uesave::ValueVec::Int(v) => {
-                        *v = arr.iter().filter_map(|x| x.as_i64().map(|n| n as i32)).collect::<Vec<_>>();
+                        *v = arr
+                            .iter()
+                            .filter_map(|x| x.as_i64().map(|n| n as i32))
+                            .collect::<Vec<_>>();
                     }
                     uesave::ValueVec::Float(v) => {
-                        *v = arr.iter().filter_map(|x| x.as_f64().map(|n| uesave::Float(n as f32))).collect::<Vec<_>>();
+                        *v = arr
+                            .iter()
+                            .filter_map(|x| x.as_f64().map(|n| uesave::Float(n as f32)))
+                            .collect::<Vec<_>>();
                     }
                     uesave::ValueVec::Double(v) => {
-                        *v = arr.iter().filter_map(|x| x.as_f64().map(|n| uesave::Double(n))).collect::<Vec<_>>();
+                        *v = arr
+                            .iter()
+                            .filter_map(|x| x.as_f64().map(|n| uesave::Double(n)))
+                            .collect::<Vec<_>>();
                     }
                     uesave::ValueVec::Bool(v) => {
                         *v = arr.iter().filter_map(|x| x.as_bool()).collect::<Vec<_>>();
                     }
                     uesave::ValueVec::Str(v) | uesave::ValueVec::Name(v) => {
-                        *v = arr.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect::<Vec<_>>();
+                        *v = arr
+                            .iter()
+                            .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                            .collect::<Vec<_>>();
                     }
                     _ => {}
                 }
@@ -341,10 +381,9 @@ fn update_property_from_json(prop: &mut uesave::Property, val: &serde_json::Valu
 pub fn write_save_data(path: String, updates: serde_json::Value) -> Result<(), String> {
     let mut file = fs::File::open(&path).map_err(|e| e.to_string())?;
     let mut save = uesave::Save::read(&mut file).map_err(|e| e.to_string())?;
-    
+
     if let Some(obj) = updates.as_object() {
         for (key_str, val_json) in obj {
-            
             let (name_part, index_part) = key_str.rsplit_once('_').ok_or("Invalid key format")?;
             let index = index_part.parse::<u32>().map_err(|e| e.to_string())?;
             let key = uesave::PropertyKey(index, name_part.to_string());
@@ -354,10 +393,10 @@ pub fn write_save_data(path: String, updates: serde_json::Value) -> Result<(), S
             }
         }
     }
-    
+
     let mut writer = fs::File::create(&path).map_err(|e| e.to_string())?;
     save.write(&mut writer).map_err(|e| e.to_string())?;
-    
+
     Ok(())
 }
 
@@ -365,8 +404,8 @@ pub fn write_save_data(path: String, updates: serde_json::Value) -> Result<(), S
 pub fn export_saves(save_paths: Vec<String>, output_path: String) -> Result<(), String> {
     let file = fs::File::create(&output_path).map_err(|e| e.to_string())?;
     let mut zip = zip::ZipWriter::new(file);
-    let options: zip::write::SimpleFileOptions =
-        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let options: zip::write::SimpleFileOptions = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated);
 
     for path_str in save_paths {
         let path = Path::new(&path_str);
@@ -376,7 +415,8 @@ pub fn export_saves(save_paths: Vec<String>, output_path: String) -> Result<(), 
                 .and_then(|n| n.to_str())
                 .unwrap_or("save.sav");
 
-            zip.start_file(filename, options).map_err(|e| e.to_string())?;
+            zip.start_file(filename, options)
+                .map_err(|e| e.to_string())?;
             let data = fs::read(path).map_err(|e| e.to_string())?;
             use std::io::Write;
             zip.write_all(&data).map_err(|e| e.to_string())?;
