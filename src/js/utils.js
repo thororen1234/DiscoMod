@@ -106,3 +106,81 @@ export async function showImportSelectionModal(title, items, confirmText = "Impo
     $('modal-import-selection-cancel').addEventListener('click', onCancel);
   });
 }
+
+export async function ask(message, options = {}) {
+  const title = options.title || 'Confirm';
+  const yesText = options.okLabel || 'Yes';
+  const noText = options.cancelLabel || 'No';
+
+  const modal = $('modal-confirm');
+  const titleEl = $('modal-confirm-title');
+  const bodyEl = $('modal-confirm-body');
+  const yesBtn = $('modal-confirm-yes');
+  const noBtn = $('modal-confirm-no');
+
+  if (!modal || !titleEl || !bodyEl || !yesBtn || !noBtn) {
+    console.error('Confirm modal elements missing');
+    return window.confirm(message);
+  }
+
+  titleEl.innerText = title;
+  bodyEl.innerText = message;
+  yesBtn.innerText = yesText;
+  noBtn.innerText = noText;
+
+  modal.classList.remove('kind-warning', 'kind-error', 'kind-info');
+  if (options.kind) {
+    modal.classList.add(`kind-${options.kind}`);
+  }
+
+  showModal('modal-confirm');
+
+  return new Promise((resolve) => {
+    const onYes = () => {
+      cleanup();
+      resolve(true);
+    };
+    const onNo = () => {
+      cleanup();
+      resolve(false);
+    };
+    const cleanup = () => {
+      yesBtn.removeEventListener('click', onYes);
+      noBtn.removeEventListener('click', onNo);
+      closeModal('modal-confirm');
+    };
+
+    yesBtn.addEventListener('click', onYes);
+    noBtn.addEventListener('click', onNo);
+  });
+}
+
+export async function message(msg, options = {}) {
+  const title = options.title || 'Message';
+  const okText = options.okLabel || 'OK';
+
+  const modal = $('modal-confirm');
+  const titleEl = $('modal-confirm-title');
+  const bodyEl = $('modal-confirm-body');
+  const yesBtn = $('modal-confirm-yes');
+  const noBtn = $('modal-confirm-no');
+
+  if (!modal) return window.alert(msg);
+
+  titleEl.innerText = title;
+  bodyEl.innerText = msg;
+  yesBtn.innerText = okText;
+  noBtn.style.display = 'none';
+
+  showModal('modal-confirm');
+
+  return new Promise((resolve) => {
+    const onOk = () => {
+      noBtn.style.display = 'inline-flex';
+      yesBtn.removeEventListener('click', onOk);
+      closeModal('modal-confirm');
+      resolve();
+    };
+    yesBtn.addEventListener('click', onOk);
+  });
+}

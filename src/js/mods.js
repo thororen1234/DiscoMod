@@ -61,6 +61,12 @@ export function renderMods() {
     modEl.title = `Added: ${formatDate(mod.createdAt)}`;
 
     modEl.innerHTML = `
+      <div class="col-select">
+        <label class="checkbox-container">
+          <input type="checkbox" class="mod-item-check" data-id="${mod.folderName}">
+          <span class="checkmark"></span>
+        </label>
+      </div>
       <div class="mod-info">
         <div class="mod-name">${mod.name}</div>
         <div class="mod-meta">v${mod.version || '1.0.0'} • ${formatSize(mod.size)} • Added: ${formatDate(mod.createdAt)}</div>
@@ -88,6 +94,7 @@ export function renderMods() {
   });
 
   attachModEvents();
+  updateModsBulkUI();
 }
 
 async function syncChanges() {
@@ -148,6 +155,29 @@ function attachModEvents() {
       }
     });
   });
+
+  document.querySelectorAll('.mod-item-check').forEach(el => {
+    el.addEventListener('change', updateModsBulkUI);
+  });
+}
+
+function updateModsBulkUI() {
+  const checks = document.querySelectorAll('.mod-item-check:checked');
+  const bar = $('mods-bulk-actions');
+  const count = $('mods-selected-count');
+  const selectAll = $('mods-select-all');
+
+  if (checks.length > 0) {
+    bar.style.display = 'flex';
+    count.innerText = `${checks.length} item${checks.length === 1 ? '' : 's'} selected`;
+  } else {
+    bar.style.display = 'none';
+  }
+
+  const allChecks = document.querySelectorAll('.mod-item-check');
+  if (selectAll) {
+    selectAll.checked = allChecks.length > 0 && checks.length === allChecks.length;
+  }
 }
 
 export function setupModsEvents() {
@@ -277,6 +307,61 @@ export function setupModsEvents() {
       } catch (err) {
         closeModal('modal-loading');
         showToast(`Export error: ${err}`, 'error');
+      }
+    }
+  });
+
+  $('mods-select-all')?.addEventListener('change', (e) => {
+    document.querySelectorAll('.mod-item-check').forEach(cb => {
+      cb.checked = e.target.checked;
+    });
+    updateModsBulkUI();
+  });
+
+  $('btn-bulk-enable-mods')?.addEventListener('click', async () => {
+    const selected = Array.from(document.querySelectorAll('.mod-item-check:checked')).map(cb => cb.dataset.id);
+    if (selected.length === 0) return;
+
+    selected.forEach(id => {
+      const mod = state.availableMods.find(m => m.folderName === id);
+      if (mod) mod.enabled = true;
+    });
+    renderMods();
+    await syncChanges();
+    showToast(`Enabled ${selected.length} mods`, 'success');
+  });
+
+  $('btn-bulk-disable-mods')?.addEventListener('click', async () => {
+    const selected = Array.from(document.querySelectorAll('.mod-item-check:checked')).map(cb => cb.dataset.id);
+    if (selected.length === 0) return;
+
+    selected.forEach(id => {
+      const mod = state.availableMods.find(m => m.folderName === id);
+      if (mod) mod.enabled = false;
+    });
+    renderMods();
+    await syncChanges();
+    showToast(`Disabled ${selected.length} mods`, 'success');
+  });
+
+  $('btn-bulk-delete-mods')?.addEventListener('click', async () => {
+    const selected = Array.from(document.querySelectorAll('.mod-item-check:checked')).map(cb => cb.dataset.id);
+    if (selected.length === 0) return;
+
+    const yes = await ask(`Are you sure you want to permanently delete ${selected.length} selected mod${selected.length === 1 ? '' : 's'}?`, { title: "Confirm Bulk Deletion", kind: 'warning' });
+    if (yes) {
+      try {
+        showModal('modal-loading');
+        for (const folderName of selected) {
+          await invoke('delete_mod', { folderName });
+        }
+        closeModal('modal-loading');
+        showToast(`Deleted ${selected.length} mods`, 'success');
+        await refreshMods();
+        await syncChanges();
+      } catch (err) {
+        closeModal('modal-loading');
+        showToast(`Error during bulk deletion: ${err}`, 'error');
       }
     }
   });

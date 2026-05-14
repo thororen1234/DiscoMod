@@ -19,8 +19,8 @@
       <div class="modal-title" id="modal-confirm-title">Confirm</div>
       <div class="modal-body" id="modal-confirm-body"></div>
       <div class="modal-actions">
-        <button class="modal-btn" id="modal-confirm-no">Cancel</button>
         <button class="modal-btn accent" id="modal-confirm-yes">OK</button>
+        <button class="modal-btn" id="modal-confirm-no">Cancel</button>
       </div>
     </div>
   </div>
@@ -44,8 +44,8 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button class="modal-btn" id="modal-install-cancel">Cancel</button>
         <button class="modal-btn accent" id="modal-install-confirm">Install</button>
+        <button class="modal-btn" id="modal-install-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -60,8 +60,8 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button class="modal-btn" id="modal-rename-cancel">Cancel</button>
         <button class="modal-btn accent" id="modal-rename-confirm">Rename</button>
+        <button class="modal-btn" id="modal-rename-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -97,8 +97,8 @@
         <p class="meta-help">Note: Metadata is required for the game to recognize the song.</p>
       </div>
       <div class="modal-actions">
-        <button class="modal-btn" id="modal-song-meta-cancel">Cancel</button>
         <button class="modal-btn accent" id="modal-song-meta-confirm">Confirm</button>
+        <button class="modal-btn" id="modal-song-meta-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -125,8 +125,8 @@
           Bool, String) are editable.</p>
       </div>
       <div class="modal-actions">
-        <button class="modal-btn" id="modal-save-editor-cancel">Cancel</button>
         <button class="modal-btn accent" id="modal-save-editor-confirm">Save Edits</button>
+        <button class="modal-btn" id="modal-save-editor-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -213,8 +213,8 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button class="modal-btn" id="modal-import-selection-cancel">Cancel</button>
         <button class="modal-btn accent" id="modal-import-selection-confirm">Import Selected</button>
+        <button class="modal-btn" id="modal-import-selection-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -460,7 +460,23 @@
                 </div>
               </div>
 
+              <div id="mods-bulk-actions" class="bulk-actions-bar" style="display: none;">
+                <div class="bulk-info">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="mods-select-all">
+                    <span class="checkmark"></span>
+                  </label>
+                  <span id="mods-selected-count">0 items selected</span>
+                </div>
+                <div class="bulk-btns">
+                  <button class="bulk-btn accent" id="btn-bulk-enable-mods">Enable Selected</button>
+                  <button class="bulk-btn accent" id="btn-bulk-disable-mods">Disable Selected</button>
+                  <button class="bulk-btn danger" id="btn-bulk-delete-mods">Delete Selected</button>
+                </div>
+              </div>
+
               <div class="mod-list-header">
+                <span class="col-select"></span>
                 <span class="col-name">Mod Name</span>
                 <span class="col-type">Type</span>
                 <span class="col-edit">Edit</span>
@@ -626,6 +642,19 @@
                 </div>
                 <div class="header-actions">
                   <button class="save-btn" id="btn-refresh-songs">Refresh</button>
+                </div>
+              </div>
+
+              <div id="songs-bulk-actions" class="bulk-actions-bar" style="display: none;">
+                <div class="bulk-info">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="songs-select-all">
+                    <span class="checkmark"></span>
+                  </label>
+                  <span id="songs-selected-count">0 items selected</span>
+                </div>
+                <div class="bulk-btns">
+                  <button class="bulk-btn danger" id="btn-bulk-delete-songs">Delete Selected</button>
                 </div>
               </div>
               <div id="songs-list" class="item-list"></div>

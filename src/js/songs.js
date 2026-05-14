@@ -61,6 +61,12 @@ export function renderSongs() {
     const pauseIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
 
     songEl.innerHTML = `
+      <div class="col-select" style="margin-right: 12px;">
+        <label class="checkbox-container">
+          <input type="checkbox" class="song-item-check" data-path="${song.folderPath}">
+          <span class="checkmark"></span>
+        </label>
+      </div>
       <div class="song-info">
         <div class="song-name">${song.songName}</div>
         <div class="song-meta">${artist} • ${song.tempo} BPM • Added: ${formatDate(song.createdAt)}</div>
@@ -75,6 +81,7 @@ export function renderSongs() {
   });
 
   attachSongEvents();
+  updateSongsBulkUI();
 }
 
 function attachSongEvents() {
@@ -147,6 +154,29 @@ function attachSongEvents() {
       showModal('modal-song-meta');
     });
   });
+
+  document.querySelectorAll('.song-item-check').forEach(el => {
+    el.addEventListener('change', updateSongsBulkUI);
+  });
+}
+
+function updateSongsBulkUI() {
+  const checks = document.querySelectorAll('.song-item-check:checked');
+  const bar = $('songs-bulk-actions');
+  const count = $('songs-selected-count');
+  const selectAll = $('songs-select-all');
+
+  if (checks.length > 0) {
+    bar.style.display = 'flex';
+    count.innerText = `${checks.length} item${checks.length === 1 ? '' : 's'} selected`;
+  } else {
+    bar.style.display = 'none';
+  }
+
+  const allChecks = document.querySelectorAll('.song-item-check');
+  if (selectAll) {
+    selectAll.checked = allChecks.length > 0 && checks.length === allChecks.length;
+  }
 }
 
 export function setupSongsEvents() {
@@ -307,6 +337,34 @@ export function setupSongsEvents() {
       await invoke('open_songs_dir');
     } catch (err) {
       showToast(`Error: ${err}`, 'error');
+    }
+  });
+
+  $('songs-select-all')?.addEventListener('change', (e) => {
+    document.querySelectorAll('.song-item-check').forEach(cb => {
+      cb.checked = e.target.checked;
+    });
+    updateSongsBulkUI();
+  });
+
+  $('btn-bulk-delete-songs')?.addEventListener('click', async () => {
+    const selected = Array.from(document.querySelectorAll('.song-item-check:checked')).map(cb => cb.dataset.path);
+    if (selected.length === 0) return;
+
+    const yes = await ask(`Are you sure you want to permanently delete ${selected.length} selected song${selected.length === 1 ? '' : 's'}?`, { title: "Confirm Bulk Deletion", kind: 'warning' });
+    if (yes) {
+      try {
+        showModal('modal-loading');
+        for (const path of selected) {
+          await invoke('delete_song', { folderPath: path });
+        }
+        closeModal('modal-loading');
+        showToast(`Deleted ${selected.length} songs`, 'success');
+        await refreshSongs();
+      } catch (err) {
+        closeModal('modal-loading');
+        showToast(`Error during bulk deletion: ${err}`, 'error');
+      }
     }
   });
 }
