@@ -1,6 +1,6 @@
 [package]
 name = "discomod"
-version = "1.0.6"
+version = "1.0.7"
 description = "A Mod Manager for Dead as Disco"
 authors = ["thororen1234"]
 edition = "2021"
@@ -31,3 +31,5 @@ rand = "0.9"
 tokio = { version = "1", features = ["full"] }
 open = "5"
 dirs = "5"
+chrono = "0.4"
+uesave = "0.7.1"

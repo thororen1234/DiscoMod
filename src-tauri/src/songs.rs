@@ -1,8 +1,116 @@
-use crate::utils::{rand_u64, safe_folder_name, unique_dest};
+use crate::utils::{rand_u64, safe_folder_name, unique_dest, ScannedItem};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+#[tauri::command]
+pub fn scan_path_for_songs(path: String) -> Result<Vec<ScannedItem>, String> {
+    let p = Path::new(&path);
+    if !p.exists() {
+        return Err("Path not found".to_string());
+    }
+
+    let mut items = vec![];
+    if p.is_dir() {
+        for entry in walkdir::WalkDir::new(p).into_iter().flatten() {
+            let path = entry.path();
+            if path.is_dir() && is_valid_song_folder(path) {
+                let name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                items.push(ScannedItem {
+                    name,
+                    internal_path: path.to_string_lossy().to_string(),
+                });
+            }
+        }
+    } else if path.to_lowercase().ends_with(".zip") {
+        let file = fs::File::open(&path).map_err(|e| e.to_string())?;
+        let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+
+        let mut folders_with_meta = HashSet::new();
+        let mut folders_with_audio = HashSet::new();
+
+        for i in 0..archive.len() {
+            let file = archive.by_index(i).map_err(|e| e.to_string())?;
+            let name = file.name();
+            if name.ends_with("Meta.json") {
+                let parent = Path::new(name).parent().unwrap_or(Path::new("")).to_str().unwrap_or("").to_string();
+                folders_with_meta.insert(parent);
+            }
+            if name.ends_with("Audio.ogg") {
+                let parent = Path::new(name).parent().unwrap_or(Path::new("")).to_str().unwrap_or("").to_string();
+                folders_with_audio.insert(parent);
+            }
+        }
+
+        for folder in folders_with_meta.intersection(&folders_with_audio) {
+            let display_name = if folder.is_empty() {
+                Path::new(&path).file_stem().unwrap_or_default().to_string_lossy().to_string()
+            } else {
+                Path::new(folder).file_name().unwrap_or_default().to_string_lossy().to_string()
+            };
+            items.push(ScannedItem {
+                name: display_name,
+                internal_path: folder.clone(),
+            });
+        }
+    }
+
+    Ok(items)
+}
+
+#[tauri::command]
+pub fn import_songs_from_zip(
+    app: tauri::AppHandle,
+    zip_path: String,
+    internal_paths: Vec<String>,
+) -> Result<String, String> {
+    let base = imported_songs_dir();
+    fs::create_dir_all(&base).ok();
+
+    let file = fs::File::open(&zip_path).map_err(|e| e.to_string())?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+
+    let temp_base = std::env::temp_dir().join("discomod_partial_import");
+    if temp_base.exists() {
+        fs::remove_dir_all(&temp_base).ok();
+    }
+    fs::create_dir_all(&temp_base).map_err(|e| e.to_string())?;
+
+    let mut imported_count = 0;
+    for internal_path in internal_paths {
+        let folder_name = if internal_path.is_empty() {
+            Path::new(&zip_path).file_stem().unwrap_or_default().to_string_lossy().to_string()
+        } else {
+            Path::new(&internal_path).file_name().unwrap_or_default().to_string_lossy().to_string()
+        };
+
+        let temp_dest = temp_base.join(&folder_name);
+        fs::create_dir_all(&temp_dest).map_err(|e| e.to_string())?;
+
+        let prefix = if internal_path.is_empty() { "".to_string() } else { format!("{}/", internal_path) };
+        
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
+            let name = file.name().to_string();
+            if name.starts_with(&prefix) && !file.is_dir() {
+                let relative = name.strip_prefix(&prefix).unwrap_or(&name);
+                let outpath = temp_dest.join(relative);
+                if let Some(p) = outpath.parent() {
+                    fs::create_dir_all(p).ok();
+                }
+                let mut outfile = fs::File::create(&outpath).map_err(|e| e.to_string())?;
+                std::io::copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
+            }
+        }
+
+        import_folder(app.clone(), &temp_dest, &base, None).ok();
+        imported_count += 1;
+    }
+
+    fs::remove_dir_all(&temp_base).ok();
+    Ok(format!("Imported {} songs", imported_count))
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -738,4 +846,13 @@ pub async fn download_song(
     .map_err(|e| e.to_string())?;
 
     Ok(format!("Downloaded '{}' by {}.", title, artist))
+}
+
+#[tauri::command]
+pub fn open_songs_dir() -> Result<(), String> {
+    let path = imported_songs_dir();
+    if !path.exists() {
+        fs::create_dir_all(&path).map_err(|e| e.to_string())?;
+    }
+    open::that(path).map_err(|e| e.to_string())
 }

@@ -1,5 +1,6 @@
 mod mod_manager;
 mod nexus;
+mod saves;
 mod songs;
 mod utils;
 
@@ -38,6 +39,12 @@ pub fn run() {
             mod_manager::list_themes,
             mod_manager::read_theme,
             mod_manager::install_ue4ss,
+            mod_manager::is_ue4ss_installed,
+            mod_manager::uninstall_ue4ss,
+            mod_manager::scan_path_for_mods,
+            mod_manager::import_mods_from_zip,
+            songs::scan_path_for_songs,
+            songs::import_songs_from_zip,
             songs::scan_songs,
             songs::delete_song,
             songs::update_song_metadata,
@@ -46,8 +53,19 @@ pub fn run() {
             songs::import_shared_package,
             songs::fetch_song_catalogue,
             songs::download_song,
+            songs::open_songs_dir,
             nexus::fetch_nexus_mods,
             nexus::download_nexus_mod,
+            saves::list_game_saves,
+            saves::backup_save,
+            saves::list_backups,
+            saves::restore_save,
+            saves::delete_backup,
+            saves::open_saves_dir,
+            saves::import_save,
+            saves::read_save_data,
+            saves::write_save_data,
+            saves::export_saves,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

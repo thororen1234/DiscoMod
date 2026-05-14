@@ -1,26 +1,13 @@
-
-const { invoke } = window.__TAURI__.core;
-const { open: openDialog, message, ask, confirm } = window.__TAURI__.dialog;
-const { openUrl } = window.__TAURI__.opener;
-const { getCurrentWindow } = window.__TAURI__.window;
-const { check: checkUpdate } = window.__TAURI__.updater;
-let config = {};
-let availableMods = [];
-let availableSongs = [];
-let currentPremiumModId = null;
-
-const $ = (id) => document.getElementById(id);
-const formatDate = (ts) => {
-  if (!ts) return 'Unknown';
-  return new Date(ts * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
-const formatSize = (bytes) => {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
+import { invoke, getCurrentWindow, checkUpdate, openUrl, ask } from './js/api.js';
+import { $, showToast, setStatus, showModal, closeModal } from './js/utils.js';
+import { state } from './js/state.js';
+import { loadConfig, saveConfig, loadCustomThemes } from './js/config.js';
+import { setupModsEvents, refreshMods } from './js/mods.js';
+import { setupSongsEvents, refreshSongs } from './js/songs.js';
+import { setupSavesEvents, refreshSaves, refreshBackups } from './js/saves.js';
+import { setupConfigEvents } from './js/settings.js';
+import { setupDownloaderEvents, autoFetchCatalogue } from './js/downloader.js';
+import { setupNexusEvents } from './js/nexus.js';
 
 async function init() {
   await setupWindowControls();
@@ -47,11 +34,18 @@ async function init() {
   setupNavigation();
   setupModsEvents();
   setupSongsEvents();
-  setupConfigEvents();
+  setupSavesEvents();
+  setupDownloaderEvents();
+  setupNexusEvents();
+  setupMenuNavigation('mods');
+  setupMenuNavigation('songs');
+  setupMenuNavigation('saves');
   setupModals();
   setupExternalLinks();
   setupUtilityEvents();
   setupCustomSelects();
+  setupConfigEvents();
+  refreshUE4SSStatus();
 
   try {
     await refreshMods();
@@ -65,49 +59,34 @@ async function init() {
     console.error('Failed to refresh songs:', e);
   }
 
-  checkUpdates(true);
+  try {
+    await refreshSaves();
+    await refreshBackups();
+  } catch (e) {
+    console.error('Failed to refresh saves:', e);
+  }
 
+  checkUpdates(true);
   loadCustomThemes();
+  startAutoRefresh();
+}
+
+let refreshInterval = null;
+function startAutoRefresh() {
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(async () => {
+    
+    if (document.hasFocus()) {
+      await refreshMods(true); 
+      await refreshSongs(true);
+      await refreshSaves(true);
+      await refreshBackups(true);
+      await loadCustomThemes(true);
+    }
+  }, 10000); 
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
-function showToast(msg, type = 'info') {
-  const container = $('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerText = msg;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 200);
-  }, 3000);
-}
-
-function setStatus(text, error = false) {
-  const el = $('status-bar');
-  if (!el) return;
-
-  if (!text || text.includes("System ready")) {
-    el.classList.remove('active');
-    return;
-  }
-
-  el.innerText = text;
-  el.classList.toggle('error', error);
-  el.classList.add('active');
-}
-
-function showModal(id) {
-  const el = $(id);
-  if (el) el.classList.add('open');
-  else console.error(`Modal with ID ${id} not found.`);
-}
-
-function closeModal(id) {
-  const el = $(id);
-  if (el) el.classList.remove('open');
-}
 
 async function setupWindowControls() {
   const appWindow = getCurrentWindow();
@@ -122,730 +101,107 @@ async function setupWindowControls() {
   setupBtn('btn-close', () => appWindow.close());
 }
 
-async function loadConfig() {
-  try {
-    config = await invoke('load_config');
-    $('exe-input').value = config.exePath || '';
-    $('storage-input').value = config.modsStoragePath || '';
+function switchPage(pageId, push = true) {
+  const pages = document.querySelectorAll('.page');
+  const navBtns = document.querySelectorAll('.nav-btn');
 
-    if (config.discomapsApiKey) $('dl-api-key-input').value = config.discomapsApiKey;
-    if (config.nexusApiKey) $('nexus-api-key-input').value = config.nexusApiKey;
-    if (config.theme) {
-      document.documentElement.setAttribute('data-theme', config.theme);
-      $('theme-select').value = config.theme;
+  pages.forEach(p => p.classList.toggle('active', p.id === `page-${pageId}`));
+  navBtns.forEach(n => n.classList.toggle('active', n.dataset.page === pageId));
 
-      const themeLabel = $('theme-current-label');
-      const selectedOption = document.querySelector(`.custom-option[data-value="${config.theme}"]`);
-      if (themeLabel && selectedOption) {
-        themeLabel.innerText = selectedOption.innerText;
-        document.querySelectorAll('.custom-option').forEach(o => o.classList.toggle('selected', o === selectedOption));
-      }
-    }
-    if (config.modsSort) $('mods-sort').value = config.modsSort;
-    if (config.modsStatusFilter) $('mods-status-filter').value = config.modsStatusFilter;
-    if (config.songsSort) $('songs-sort').value = config.songsSort;
-  } catch (err) {
-    console.error("Failed to load config:", err);
+  
+  switchSubView(pageId, 'menu');
+  
+  if (push) {
+    history.pushState({ pageId }, '', `#${pageId}`);
   }
 }
 
-async function loadCustomThemes() {
-  try {
-    const themes = await invoke('list_themes');
-    if (!themes || !Array.isArray(themes)) return;
+function switchSubView(pageId, viewId) {
+  if (!pageId) return;
+  
+  const views = document.querySelectorAll(`#page-${pageId} .page-view`);
+  const breadcrumb = $(`${pageId}-breadcrumb`);
+  const title = $(`${pageId}-title`);
+  const stats = $(`${pageId}-stats`);
+  const currentBreadcrumb = $(`${pageId}-breadcrumb-current`);
 
-    const optionsContainer = $('theme-options');
-    const nativeSelect = $('theme-select');
-    if (!optionsContainer || !nativeSelect) return;
+  if (views.length > 0) {
+    views.forEach(v => {
+      const targetId = `${pageId}-view-${viewId}`;
+      v.classList.toggle('active', v.id === targetId);
+    });
+  }
 
-    if (document.querySelector('.custom-option-group-label')) return;
-
-    const group = document.createElement('div');
-    group.className = 'custom-option-group custom-option-group-label';
-    group.innerText = 'Custom Themes';
-    optionsContainer.appendChild(group);
-
-    for (const theme of themes) {
-      if (!Array.isArray(theme) || theme.length < 2) continue;
-      const [name, path] = theme;
-      
-      try {
-        const cssContent = await invoke('read_theme', { path });
-        const style = document.createElement('style');
-        style.id = `custom-theme-${name}`;
-        style.textContent = cssContent;
-        document.head.appendChild(style);
-      } catch (e) {
-        console.error("Failed to read theme content:", name, e);
-        continue;
-      }
-
-      const opt = document.createElement('div');
-      opt.className = 'custom-option';
-      opt.dataset.value = name;
-      opt.innerText = name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      optionsContainer.appendChild(opt);
-
-      const nativeOpt = document.createElement('option');
-      nativeOpt.value = name;
-      nativeOpt.innerText = opt.innerText;
-      nativeSelect.appendChild(nativeOpt);
+  if (viewId === 'menu') {
+    if (breadcrumb) breadcrumb.style.display = 'none';
+    if (title) {
+      title.style.display = 'block';
+      const mainTitles = { 'mods': 'Mod Manager', 'songs': 'Song Manager', 'saves': 'Game Saves' };
+      title.innerText = mainTitles[pageId] || 'Manager';
     }
-
-    if (config.theme) {
-      const selectedOption = document.querySelector(`.custom-option[data-value="${config.theme}"]`);
-      if (selectedOption) {
-        $('theme-current-label').innerText = selectedOption.innerText;
-        document.querySelectorAll('.custom-option').forEach(o => o.classList.toggle('selected', o === selectedOption));
-      }
+    if (stats) stats.style.display = 'block';
+  } else {
+    if (breadcrumb) breadcrumb.style.display = 'flex';
+    if (currentBreadcrumb) {
+      const viewNames = {
+        'list': pageId === 'mods' ? 'Available Mods' : 'Custom Songs',
+        'nexus': 'Browse Nexus',
+        'importers': 'Import & Export',
+        'downloader': 'Song Downloader',
+        'backups': 'Backups & Recovery',
+        'editor': 'Save Editor'
+      };
+      const viewName = viewNames[viewId] || (viewId.charAt(0).toUpperCase() + viewId.slice(1));
+      currentBreadcrumb.innerText = viewName;
+      if (title) title.innerText = viewName;
     }
-  } catch (e) {
-    console.error("Failed to load custom themes:", e);
+    
+    if (stats) stats.style.display = (viewId === 'list' || viewId === 'backups') ? 'block' : 'none';
+    if (viewId === 'downloader') autoFetchCatalogue();
   }
 }
 
-async function saveConfig() {
-  try {
-    await invoke('save_config', { config });
-  } catch (err) {
-    showToast(`Sync error: ${err}`, 'error');
-    setStatus('● ' + "Sync error", true);
+function setupMenuNavigation(pageId) {
+  const container = $(`${pageId}-content`);
+  if (!container) return;
+
+  
+  container.querySelectorAll('.menu-card[data-view]').forEach(card => {
+    card.addEventListener('click', () => {
+      switchSubView(pageId, card.dataset.view);
+    });
+  });
+
+  
+  const breadcrumb = $(`${pageId}-breadcrumb`);
+  if (breadcrumb) {
+    breadcrumb.querySelectorAll('.breadcrumb-item[data-view]').forEach(item => {
+      item.addEventListener('click', () => {
+        switchSubView(pageId, item.dataset.view);
+      });
+    });
   }
 }
 
 function setupNavigation() {
   const navBtns = document.querySelectorAll('.nav-btn');
-  const pages = document.querySelectorAll('.page');
-  const actionBars = document.querySelectorAll('.sidebar-actions');
-  const header = $('header-section');
-
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const targetPage = btn.dataset.page;
-
-      navBtns.forEach(b => b.classList.toggle('active', b === btn));
-      pages.forEach(p => p.classList.toggle('active', p.id === `page-${targetPage}`));
-
-      const navActions = document.querySelectorAll('.nav-actions');
-      navActions.forEach(bar => {
-        bar.style.display = bar.id === `actions-${targetPage}` ? 'flex' : 'none';
-      });
-
-      const actionsLabel = $('nav-actions-lbl');
-      if (actionsLabel) {
-        const hasActions = (targetPage === 'mods' || targetPage === 'songs');
-        actionsLabel.style.display = hasActions ? 'flex' : 'none';
-      }
+      switchPage(btn.dataset.page);
     });
   });
 
-  $('actions-mods').style.display = 'flex';
-  $('actions-songs').style.display = 'none';
-}
-
-async function refreshMods() {
-  if (!config.modsStoragePath) return;
-  try {
-    availableMods = await invoke('get_available_mods');
-    renderMods();
-    setStatus('● ' + "System ready");
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-function renderMods() {
-  const container = $('mods-list');
-  const emptyState = $('mods-empty');
-  const searchTerm = ($('mods-search')?.value || '').toLowerCase();
-  const sortBy = $('mods-sort')?.value || 'name';
-  const statusFilter = $('mods-status-filter')?.value || 'all';
-
-  container.innerHTML = '';
-
-  let filtered = availableMods.filter(mod => {
-    const matchesSearch = mod.name.toLowerCase().includes(searchTerm) ||
-      mod.folderName.toLowerCase().includes(searchTerm) ||
-      (mod.type && mod.type.toLowerCase().includes(searchTerm));
-
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'enabled' && mod.enabled) ||
-      (statusFilter === 'disabled' && !mod.enabled);
-
-    return matchesSearch && matchesStatus;
-  });
-
-  filtered.sort((a, b) => {
-    if (sortBy === 'date') return (b.createdAt || 0) - (a.createdAt || 0);
-    if (sortBy === 'type') return (a.type || '').localeCompare(b.type || '');
-    return a.name.localeCompare(b.name);
-  });
-
-  if (filtered.length === 0) {
-    emptyState.style.display = 'block';
-    emptyState.innerHTML = searchTerm ? `<p>No mods matching "${searchTerm}"</p>` : `<p>No mods found. Add some to get started!</p>`;
-    return;
-  }
-
-  emptyState.style.display = 'none';
-
-  filtered.forEach((mod) => {
-    const modEl = document.createElement('div');
-    modEl.className = `mod-item ${mod.enabled ? 'active-mod' : ''}`;
-    modEl.title = `Added: ${formatDate(mod.createdAt)}`;
-
-    modEl.innerHTML = `
-      <div class="mod-info">
-        <div class="mod-name">${mod.name}</div>
-        <div class="mod-meta">v${mod.version || '1.0.0'} • ${formatSize(mod.size)} • Added: ${formatDate(mod.createdAt)}</div>
-      </div>
-      <select class="mod-type-select" data-id="${mod.folderName}">
-        <option value="character" ${mod.type === 'character' ? 'selected' : ''}>Character</option>
-        <option value="map" ${mod.type === 'map' ? 'selected' : ''}>Map</option>
-        <option value="logic" ${mod.type === 'logic' ? 'selected' : ''}>Logic</option>
-        <option value="other" ${mod.type === 'other' ? 'selected' : ''}>Other</option>
-      </select>
-      <button class="icon-btn btn-rename-mod" data-id="${mod.folderName}" title="Rename Mod">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button>
-      <button class="icon-btn danger btn-delete-mod" data-id="${mod.folderName}" title="Delete Mod">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-      </button>
-      <div class="toggle-wrap">
-        <label class="toggle">
-          <input type="checkbox" class="mod-toggle" data-id="${mod.folderName}" ${mod.enabled ? 'checked' : ''}>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-    `;
-    container.appendChild(modEl);
-  });
-
-  document.querySelectorAll('.mod-toggle').forEach(el => {
-    el.addEventListener('change', (e) => {
-      const folderName = e.target.dataset.id;
-      const mod = availableMods.find(m => m.folderName === folderName);
-      if (mod) mod.enabled = e.target.checked;
-      renderMods();
-    });
-  });
-
-  document.querySelectorAll('.mod-type-select').forEach(el => {
-    el.addEventListener('change', async (e) => {
-      const folderName = e.target.dataset.id;
-      const newType = e.target.value;
-      const mod = availableMods.find(m => m.folderName === folderName);
-      if (mod) {
-        mod.type = newType;
-        await invoke('update_mod_metadata', { modFolderName: folderName, key: "type", value: newType });
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-rename-mod').forEach(el => {
-    el.addEventListener('click', (e) => {
-      const folderName = e.currentTarget.dataset.id;
-      $('rename-input').value = folderName;
-      $('rename-input').dataset.oldName = folderName;
-      showModal('modal-rename');
-    });
-  });
-
-  document.querySelectorAll('.btn-delete-mod').forEach(el => {
-    el.addEventListener('click', async (e) => {
-      const folderName = e.currentTarget.dataset.id;
-      const yes = await ask(`Are you sure you want to permanently delete '${folderName}'?`, { title: "Confirm Deletion", kind: 'warning' });
-      if (yes) {
-        try {
-          await invoke('delete_mod', { folderName });
-          showToast(`Deleted ${folderName}`, 'success');
-          await refreshMods();
-        } catch (err) {
-          showToast(`Error deleting: ${err}`, 'error');
-        }
-      }
-    });
-  });
-}
-
-function setupModsEvents() {
-  $('btn-refresh-mods').addEventListener('click', refreshMods);
-  $('mods-search').addEventListener('input', renderMods);
-  $('mods-sort').addEventListener('change', () => {
-    config.modsSort = $('mods-sort').value;
-    saveConfig();
-    renderMods();
-  });
-  $('mods-status-filter').addEventListener('change', () => {
-    config.modsStatusFilter = $('mods-status-filter').value;
-    saveConfig();
-    renderMods();
-  });
-
-  $('btn-apply').addEventListener('click', async () => {
-    setStatus('● ' + "Syncing mods...");
-    const activeMods = availableMods.filter(m => m.enabled).map(m => m.folderName);
-
-    let characters = 0;
-    let maps = 0;
-    availableMods.filter(m => m.enabled).forEach(m => {
-      if (m.type === 'character') characters++;
-      if (m.type === 'map') maps++;
-    });
-
-    if (characters > 1) {
-      const yes = await ask(`Warning: You have more than one mod of type 'Character' active. This could cause the game to crash. Do you want to continue?`, { title: "Conflict Detected", kind: 'warning' });
-      if (!yes) { setStatus('● ' + "System ready"); return; }
-    }
-    if (maps > 1) {
-      const yes = await ask(`Warning: You have more than one mod of type 'Map' active. This could cause the game to crash. Do you want to continue?`, { title: "Conflict Detected", kind: 'warning' });
-      if (!yes) { setStatus('● ' + "System ready"); return; }
-    }
-
-    try {
-      await invoke('sync_mods', { selectedMods: activeMods });
-      showToast("Changes applied successfully.", 'success');
-      setStatus('● ' + "System ready");
-    } catch (err) {
-      showToast(`${"Sync error"}: ${err}`, 'error');
-      setStatus('● ' + "Sync error", true);
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.pageId) {
+      switchPage(e.state.pageId, false);
     }
   });
 
-  $('btn-open-game-dir')?.addEventListener('click', () => invoke('open_game_root'));
-  $('btn-open-active-mods-dir')?.addEventListener('click', () => invoke('open_active_mods_folder', { exePath: config.exePath }));
-  $('btn-open-logic-mods-dir')?.addEventListener('click', () => invoke('open_logic_mods_folder', { exePath: config.exePath }));
-  $('btn-open-storage-dir')?.addEventListener('click', async () => {
-    const cfg = await invoke('load_config');
-    if (cfg.modsStoragePath) invoke('open_folder', { path: cfg.modsStoragePath });
-  });
-  $('btn-open-config-dir')?.addEventListener('click', () => invoke('open_config_dir'));
-  $('btn-open-themes-dir')?.addEventListener('click', () => invoke('open_themes_dir'));
-  $('btn-install-ue4ss')?.addEventListener('click', async () => {
-    try {
-      showToast("Downloading and installing UE4SS...", 'info');
-      const msg = await invoke('install_ue4ss', { exePath: config.exePath });
-      showToast(msg, 'success');
-    } catch (err) {
-      showToast(`Installation failed: ${err}`, 'error');
-    }
-  });
+  $('btn-nav-back')?.addEventListener('click', () => history.back());
+  $('btn-nav-forward')?.addEventListener('click', () => history.forward());
 
-
-
-  $('btn-add-mod').addEventListener('click', () => showModal('modal-mod-import-method'));
-  $('mod-method-cancel').addEventListener('click', () => closeModal('modal-mod-import-method'));
-
-  $('mod-method-file').addEventListener('click', async () => {
-    closeModal('modal-mod-import-method');
-    if (!config.modsStoragePath) return showToast("Select storage folder", 'error');
-
-    const files = await openDialog({
-      multiple: true,
-      filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
-    });
-
-    if (files && files.length === 1) {
-      const file = files[0];
-      let defaultName = file.split(/[\\/]/).pop().replace('.zip', '');
-      $('install-name-input').value = defaultName;
-      $('install-name-input').dataset.archivePath = file;
-      showModal('modal-install-mod');
-    } else if (files && files.length > 1) {
-      try {
-        setStatus('● ' + `Installing ${files.length} mods...`);
-        showModal('modal-loading');
-        for (const file of files) {
-          const modName = file.split(/[\\/]/).pop().replace('.zip', '');
-          await invoke('install_mod', { archivePath: file, modName, modType: "character" });
-        }
-        closeModal('modal-loading');
-        showToast(`Successfully installed ${files.length} mods`, 'success');
-        refreshMods();
-        setStatus('● ' + "System ready");
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Bulk install failed: ${err}`, 'error');
-        setStatus('● ' + "Sync error", true);
-      }
-    }
-  });
-
-  $('mod-method-folder').addEventListener('click', async () => {
-    closeModal('modal-mod-import-method');
-    if (!config.modsStoragePath) return showToast("Select storage folder", 'error');
-
-    const folder = await openDialog({ directory: true });
-    if (folder) {
-      const modName = folder.split(/[\\/]/).pop();
-      try {
-        setStatus('● ' + "Importing mod folder...");
-        showModal('modal-loading');
-        await invoke('import_mod_from_folder', { folderPath: folder, modName, modType: "character" });
-        closeModal('modal-loading');
-        showToast(`Imported ${modName}`, 'success');
-        refreshMods();
-        setStatus('● ' + "System ready");
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Import failed: ${err}`, 'error');
-        setStatus('● ' + "Sync error", true);
-      }
-    }
-  });
-
-  $('btn-export-mods').addEventListener('click', async () => {
-    if (availableMods.length === 0) return showToast("No mods to export.", 'info');
-
-    const savePath = await window.__TAURI__.dialog.save({
-      filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
-      defaultPath: "My_Mods_Export.zip"
-    });
-
-    if (savePath) {
-      try {
-        showModal('modal-loading');
-        const folderNames = availableMods.map(m => m.folderName);
-        await invoke('export_mods', { names: folderNames, path: savePath });
-        closeModal('modal-loading');
-        showToast("Mods exported successfully!", 'success');
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Export error: ${err}`, 'error');
-      }
-    }
-  });
-
-  $('btn-launch').addEventListener('click', async () => {
-    try {
-      await invoke('launch_game');
-    } catch (err) {
-      showToast(`Launch error: ${err}`, 'error');
-    }
-  });
-}
-
-async function refreshSongs() {
-  try {
-    availableSongs = await invoke('scan_songs');
-    renderSongs();
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-let audioPlayer = new Audio();
-let currentPlayingPath = null;
-
-function renderSongs() {
-  const container = $('songs-list');
-  const emptyState = $('songs-empty');
-  const searchTerm = ($('songs-search')?.value || '').toLowerCase();
-  const sortBy = $('songs-sort')?.value || 'name';
-
-  container.innerHTML = '';
-
-  let filtered = availableSongs.filter(song =>
-    song.songName.toLowerCase().includes(searchTerm) ||
-    (Array.isArray(song.performedBy) && song.performedBy.some(p => p.toLowerCase().includes(searchTerm)))
-  );
-
-  filtered.sort((a, b) => {
-    if (sortBy === 'date') return (b.createdAt || 0) - (a.createdAt || 0);
-    return a.songName.localeCompare(b.songName);
-  });
-
-  if (filtered.length === 0) {
-    emptyState.style.display = 'block';
-    emptyState.innerHTML = searchTerm ? `<p>No songs matching "${searchTerm}"</p>` : `<p id="songs-placeholder-text">No custom songs found. Import some to get started!</p>`;
-    return;
-  }
-
-  emptyState.style.display = 'none';
-
-  filtered.forEach((song) => {
-    const songEl = document.createElement('div');
-    songEl.className = 'song-item';
-    songEl.title = `Added: ${formatDate(song.createdAt)}`;
-
-    const artist = Array.isArray(song.performedBy) ? song.performedBy.join(', ') : 'Unknown';
-    const isPlaying = currentPlayingPath === song.folderPath;
-    const playIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>`;
-    const pauseIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
-
-    songEl.innerHTML = `
-      <div class="song-info">
-        <div class="song-name">${song.songName}</div>
-        <div class="song-meta">${artist} • ${song.tempo} BPM • Added: ${formatDate(song.createdAt)}</div>
-      </div>
-      <div class="song-actions">
-        <button class="song-btn btn-play-song ${isPlaying ? 'playing' : ''}" data-path="${song.folderPath}">${isPlaying ? pauseIcon : playIcon}</button>
-        <button class="song-btn btn-edit-song" data-path="${song.folderPath}">Edit</button>
-        <button class="song-btn danger btn-delete-song" data-path="${song.folderPath}">Delete</button>
-      </div>
-    `;
-    container.appendChild(songEl);
-  });
-
-  document.querySelectorAll('.btn-play-song').forEach(el => {
-    el.addEventListener('click', async (e) => {
-      const path = e.currentTarget.dataset.path;
-      if (currentPlayingPath === path) {
-        audioPlayer.pause();
-        currentPlayingPath = null;
-        renderSongs();
-      } else {
-        try {
-          const cleanPath = path.replace(/\\/g, '/');
-          const fullPath = cleanPath.endsWith('/') ? cleanPath + 'Audio.ogg' : cleanPath + '/Audio.ogg';
-
-          let audioUrl = "";
-          try {
-            audioUrl = window.__TAURI__.core.convertFileSrc(fullPath);
-          } catch (e) {
-            console.warn("convertFileSrc failed, using fallback");
-          }
-
-          if (!audioUrl || audioUrl.startsWith(fullPath.substring(0, 1))) {
-            const encodedPath = fullPath.replace(/:/g, '%3A');
-            audioUrl = `https://asset.localhost/${encodedPath}`;
-          }
-
-          console.log("Loading audio from:", audioUrl);
-          audioPlayer.src = audioUrl;
-          await audioPlayer.play();
-          currentPlayingPath = path;
-          renderSongs();
-        } catch (err) {
-          console.error("Playback error:", err);
-          showToast(`Playback failed: ${err}`, 'error');
-        }
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-delete-song').forEach(el => {
-    el.addEventListener('click', async (e) => {
-      const path = e.currentTarget.dataset.path;
-      const song = availableSongs.find(s => s.folderPath === path);
-      const yes = await ask(`Are you sure you want to delete '${song.songName}'?\n\nThis will remove the folder from the game's directory.`, { title: "Delete Song", kind: 'warning' });
-      if (yes) {
-        try {
-          await invoke('delete_song', { folderPath: path });
-          showToast(`Deleted ${song.songName}`, 'success');
-          await refreshSongs();
-        } catch (err) {
-          showToast(`Error deleting: ${err}`, 'error');
-        }
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-edit-song').forEach(el => {
-    el.addEventListener('click', (e) => {
-      const path = e.currentTarget.dataset.path;
-      const song = availableSongs.find(s => s.folderPath === path);
-
-      $('meta-song-name').value = song.songName || '';
-      $('meta-artist').value = Array.isArray(song.performedBy) ? song.performedBy.join(', ') : '';
-      $('meta-tempo').value = song.tempo || 120;
-      $('meta-beat-offset').value = song.beatOffset || 0;
-      $('meta-start-offset').value = song.startSongOffset || 0;
-      $('meta-end-offset').value = song.endSongOffset || 0;
-      $('modal-song-meta-confirm').dataset.path = path;
-
-      showModal('modal-song-meta');
-    });
-  });
-}
-
-function setupSongsEvents() {
-  $('btn-refresh-songs').addEventListener('click', refreshSongs);
-  $('songs-search').addEventListener('input', renderSongs);
-  $('songs-sort').addEventListener('change', () => {
-    config.songsSort = $('songs-sort').value;
-    saveConfig();
-    renderSongs();
-  });
-
-  $('btn-import-song').addEventListener('click', () => {
-    showModal('modal-import-method');
-  });
-
-  $('import-method-file').addEventListener('click', async () => {
-    closeModal('modal-import-method');
-    const files = await openDialog({
-      multiple: true,
-      filters: [{ name: 'Audio/ZIP', extensions: ['ogg', 'mp3', 'wav', 'zip'] }]
-    });
-    if (files && files.length > 0) {
-      try {
-        setStatus('● ' + `Importing ${files.length} item(s)...`);
-        showModal('modal-loading');
-
-        for (const file of files) {
-          const lower = file.toLowerCase();
-          if (lower.endsWith('.zip')) {
-            await invoke('import_shared_package', { zipPath: file, strategies: {} });
-          } else {
-            await invoke('import_song', { path: file, customMetadata: null });
-          }
-        }
-
-        closeModal('modal-loading');
-        showToast(`Successfully imported ${files.length} items`, 'success');
-        refreshSongs();
-        setStatus('● ' + "System ready");
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Import failed: ${err}`, 'error');
-        setStatus('● ' + "Sync error", true);
-      }
-    }
-  });
-
-  $('import-method-folder').addEventListener('click', async () => {
-    closeModal('modal-import-method');
-    const folder = await openDialog({ directory: true });
-    if (folder) {
-      try {
-        setStatus('● ' + "Importing...");
-        showModal('modal-loading');
-        const res = await invoke('import_song', { path: folder, customMetadata: null });
-        closeModal('modal-loading');
-        showToast(res, 'success');
-        refreshSongs();
-        setStatus('● ' + "System ready");
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Import failed: ${err}`, 'error');
-        setStatus('● ' + "Sync error", true);
-      }
-    }
-  });
-
-  $('btn-export-shared').addEventListener('click', async () => {
-    if (availableSongs.length === 0) return showToast("No songs to export.", 'info');
-
-    const savePath = await window.__TAURI__.dialog.save({
-      filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
-      defaultPath: "My_Custom_Songs.zip"
-    });
-
-    if (savePath) {
-      try {
-        showModal('modal-loading');
-        const paths = availableSongs.map(s => s.folderPath);
-        await invoke('export_songs', { paths, path: savePath });
-        closeModal('modal-loading');
-        showToast("Songs exported successfully!", 'success');
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Export error: ${err}`, 'error');
-      }
-    }
-  });
-
-  $('btn-download-songs').addEventListener('click', () => {
-    showModal('modal-downloader');
-    if (config && config.discomapsApiKey) {
-      setTimeout(() => {
-        const btn = $('dl-fetch-btn');
-        if (btn) btn.click();
-      }, 100);
-    }
-  });
-}
-
-function setupConfigEvents() {
-  $('exe-browse-btn').addEventListener('click', async () => {
-    const file = await openDialog({
-      multiple: false,
-      filters: [{ name: 'Pagoda Executable', extensions: ['exe'] }]
-    });
-    if (file) {
-      try {
-        const res = await invoke('set_exe_path', { path: file });
-        $('exe-input').value = file;
-        config = res.config;
-      } catch (err) {
-        showToast(`Failed to set EXE: ${err}`, 'error');
-      }
-    }
-  });
-
-  $('storage-browse-btn').addEventListener('click', async () => {
-    const folder = await openDialog({ directory: true });
-    if (folder) {
-      try {
-        const res = await invoke('set_storage_path', { path: folder, force: false });
-        if (!res.success) {
-          const yes = await ask("Error! The storage folder MUST be outside the game directory." + "\n\nForce use this folder anyway?", { title: "Warning", kind: "warning" });
-          if (yes) {
-            const forceRes = await invoke('set_storage_path', { path: folder, force: true });
-            $('storage-input').value = folder;
-            config = forceRes.config;
-            refreshMods();
-          }
-        } else {
-          $('storage-input').value = folder;
-          config = res.config;
-          refreshMods();
-        }
-      } catch (err) {
-        showToast(`Failed to set storage: ${err}`, 'error');
-      }
-    }
-  });
-
-  $('dl-save-key-btn').addEventListener('click', () => {
-    config.discomapsApiKey = $('dl-api-key-input').value;
-    saveConfig();
-    showToast("API Key saved", 'success');
-  });
-
-  $('btn-toggle-api-key').addEventListener('click', () => {
-    const input = $('dl-api-key-input');
-    const btn = $('btn-toggle-api-key');
-    if (input.type === 'password') {
-      input.type = 'text';
-      btn.innerText = 'Hide';
-    } else {
-      input.type = 'password';
-      btn.innerText = 'Show';
-    }
-  });
-  $('theme-select').addEventListener('change', (e) => {
-    const theme = e.target.value;
-    document.documentElement.setAttribute('data-theme', theme);
-    config.theme = theme;
-    saveConfig();
-  });
-
-  $('nexus-save-key-btn').addEventListener('click', () => {
-    config.nexusApiKey = $('nexus-api-key-input').value;
-    saveConfig();
-    showToast("Nexus API Key saved", 'success');
-  });
-
-  $('btn-toggle-nexus-key').addEventListener('click', () => {
-    const input = $('nexus-api-key-input');
-    const btn = $('btn-toggle-nexus-key');
-    if (input.type === 'password') {
-      input.type = 'text';
-      btn.innerText = 'Hide';
-    } else {
-      input.type = 'password';
-      btn.innerText = 'Show';
-    }
-  });
-
-  $('btn-browse-nexus').addEventListener('click', () => showModal('modal-nexus'));
-  $('modal-nexus-close').addEventListener('click', () => closeModal('modal-nexus'));
-  $('nexus-search-btn').addEventListener('click', () => refreshNexusMods());
-  $('nexus-search').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') refreshNexusMods();
-  });
+  const hash = window.location.hash.slice(1) || 'mods';
+  switchPage(hash, true);
 }
 
 function setupExternalLinks() {
@@ -934,94 +290,117 @@ function setupModals() {
 
   $('import-method-cancel').addEventListener('click', () => closeModal('modal-import-method'));
 
-  $('modal-downloader-close').addEventListener('click', () => closeModal('modal-downloader'));
-
-  $('modal-premium-cancel').addEventListener('click', () => closeModal('modal-premium'));
-  $('modal-premium-manual').addEventListener('click', () => {
-    if (currentPremiumModId) {
-      openUrl(`https://www.nexusmods.com/deadasdisco/mods/${currentPremiumModId}?tab=files`);
-    }
-    closeModal('modal-premium');
-  });
-
-
-
-  let catalogue = [];
-  $('dl-fetch-btn').addEventListener('click', async () => {
-    const apiKey = $('dl-api-key-input').value || config.discomapsApiKey;
-    if (!apiKey) return showToast("API Key is missing! Go to Settings to add one.", 'error');
-
-    $('dl-fetch-btn').disabled = true;
-    $('dl-catalogue').innerHTML = `<div class="dl-placeholder">Loading catalogue...</div>`;
-    try {
-      catalogue = await invoke('fetch_song_catalogue', { apiKey });
-      renderCatalogue(catalogue);
-    } catch (err) {
-      $('dl-catalogue').innerHTML = `<div class="dl-placeholder" style="color:var(--danger)">Failed to fetch: ${err}</div>`;
-    } finally {
-      $('dl-fetch-btn').disabled = false;
-    }
-  }); $('dl-search').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const filtered = catalogue.filter(s =>
-      (s.t && s.t.toLowerCase().includes(term)) ||
-      (s.a && s.a.toLowerCase().includes(term))
-    );
-    renderCatalogue(filtered);
+  $('import-select-all')?.addEventListener('change', (e) => {
+    document.querySelectorAll('#import-selection-list .selection-item-check').forEach(cb => {
+      cb.checked = e.target.checked;
+    });
   });
 }
 
-function renderCatalogue(maps) {
-  const container = $('dl-catalogue');
-  container.innerHTML = '';
-  if (maps.length === 0) {
-    container.innerHTML = `<div class="dl-placeholder">No songs found.</div>`;
-    return;
-  }
+function setupUtilityEvents() {
+  $('btn-open-game-dir')?.addEventListener('click', async () => {
+    if (!state.config.exePath) return showToast("Game path not set! Go to Settings.", 'error');
+    try {
+      await invoke('open_game_root', { exePath: state.config.exePath });
+    } catch (err) {
+      showToast(`Failed to open folder: ${err}`, 'error');
+    }
+  });
 
-  maps.forEach(m => {
-    const el = document.createElement('div');
-    el.className = 'dl-item';
+  $('btn-open-active-mods-dir')?.addEventListener('click', async () => {
+    if (!state.config.exePath) return showToast("Game path not set! Go to Settings.", 'error');
+    try {
+      await invoke('open_active_mods_folder', { exePath: state.config.exePath });
+    } catch (err) {
+      showToast(`Failed to open folder: ${err}`, 'error');
+    }
+  });
 
-    const info = document.createElement('div');
-    info.className = 'dl-info';
+  $('btn-open-logic-mods-dir')?.addEventListener('click', async () => {
+    if (!state.config.exePath) return showToast("Game path not set! Go to Settings.", 'error');
+    try {
+      await invoke('open_logic_mods_folder', { exePath: state.config.exePath });
+    } catch (err) {
+      showToast(`Failed to open folder: ${err}`, 'error');
+    }
+  });
 
-    const title = document.createElement('div');
-    title.className = 'dl-title';
-    title.innerText = m.t || 'Unknown Title';
+  $('btn-open-storage-dir')?.addEventListener('click', async () => {
+    if (!state.config.modsStoragePath) return showToast("Storage path not set! Go to Settings.", 'error');
+    try {
+      await invoke('open_folder', { path: state.config.modsStoragePath });
+    } catch (err) {
+      showToast(`Failed to open folder: ${err}`, 'error');
+    }
+  });
 
-    const artist = document.createElement('div');
-    artist.className = 'dl-artist';
-    artist.innerText = m.a || 'Unknown Artist';
+  $('btn-open-config-dir')?.addEventListener('click', () => invoke('open_config_dir'));
+  $('btn-open-themes-dir')?.addEventListener('click', () => invoke('open_themes_dir'));
+  
+  $('btn-install-ue4ss-card')?.addEventListener('click', async () => {
+    try {
+      showToast("Downloading and installing UE4SS...", 'info');
+      const msg = await invoke('install_ue4ss', { exePath: state.config.exePath });
+      showToast(msg, 'success');
+      refreshUE4SSStatus();
+    } catch (err) {
+      showToast(`Installation failed: ${err}`, 'error');
+    }
+  });
 
-    const bpm = document.createElement('div');
-    bpm.className = 'dl-bpm';
-    bpm.innerText = `${m.b || 120} BPM`;
+  $('btn-uninstall-ue4ss-card')?.addEventListener('click', async () => {
+    try {
+      const msg = await invoke('uninstall_ue4ss', { exePath: state.config.exePath });
+      showToast(msg, 'success');
+      refreshUE4SSStatus();
+    } catch (err) {
+      showToast(`Uninstallation failed: ${err}`, 'error');
+    }
+  });
+  
+  $('btn-launch')?.addEventListener('click', async () => {
+    try {
+      await invoke('launch_game');
+    } catch (err) {
+      showToast(`Launch error: ${err}`, 'error');
+    }
+  });
+}
 
-    info.appendChild(title);
-    info.appendChild(artist);
-    info.appendChild(bpm);
+function setupCustomSelects() {
+  const customSelect = $('theme-custom-select');
+  const trigger = $('theme-trigger');
+  const label = $('theme-current-label');
+  const optionsPanel = $('theme-options');
+  const nativeSelect = $('theme-select');
 
-    const btn = document.createElement('button');
-    btn.className = 'dl-btn btn-dl-song';
-    btn.innerText = 'Download';
-    btn.onclick = async () => {
-      const apiKey = $('dl-api-key-input').value || config.discomapsApiKey;
-      showModal('modal-loading');
-      try {
-        const res = await invoke('download_song', { mapEntry: m, apiKey });
-        closeModal('modal-loading');
-        showToast(res, 'success');
-        refreshSongs();
-      } catch (err) {
-        closeModal('modal-loading');
-        showToast(`Download error: ${err}`, 'error');
-      }
-    };
+  if (!customSelect || !trigger) return;
 
-    el.appendChild(info);
-    el.appendChild(btn);
-    container.appendChild(el);
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    customSelect.classList.toggle('open');
+  });
+
+  optionsPanel.addEventListener('click', (e) => {
+    const opt = e.target.closest('.custom-option');
+    if (!opt) return;
+
+    const value = opt.dataset.value;
+    const text = opt.innerText;
+
+    label.innerText = text;
+    nativeSelect.value = value;
+    customSelect.classList.remove('open');
+
+    state.config.theme = value;
+    document.documentElement.setAttribute('data-theme', value);
+    saveConfig();
+
+    document.querySelectorAll('.custom-option').forEach(o => o.classList.toggle('selected', o === opt));
+  });
+
+  document.addEventListener('click', () => {
+    customSelect.classList.remove('open');
   });
 }
 
@@ -1078,23 +457,8 @@ function showUpdateModal() {
       $('modal-update-now').disabled = true;
       $('modal-update-now').innerText = "Downloading...";
 
-      let downloaded = 0;
-      let contentLength = 0;
-
       await updateManifest.downloadAndInstall((event) => {
-        switch (event.event) {
-          case 'Started':
-            contentLength = event.data.contentLength;
-            console.log(`started downloading ${contentLength} bytes`);
-            break;
-          case 'Progress':
-            downloaded += event.data.chunkLength;
-            console.log(`downloaded ${downloaded} from ${contentLength}`);
-            break;
-          case 'Finished':
-            console.log('download finished');
-            break;
-        }
+        
       });
 
       showToast("Update installed! Restarting...", 'success');
@@ -1110,7 +474,7 @@ function showUpdateModal() {
   showModal('modal-update');
 }
 
-$('btn-check-updates').addEventListener('click', () => {
+$('btn-check-updates')?.addEventListener('click', () => {
   if (updateManifest) {
     showUpdateModal();
   } else {
@@ -1118,137 +482,18 @@ $('btn-check-updates').addEventListener('click', () => {
   }
 });
 
-async function refreshNexusMods() {
-  const query = $('nexus-search').value.trim();
-  if (!query) return;
-
-  const container = $('nexus-catalogue');
-  container.innerHTML = '<div class="dl-placeholder">Searching Nexus...</div>';
-
+async function refreshUE4SSStatus() {
+  const path = state.config.exePath || state.config.exe_path;
+  if (!path) return;
+  
   try {
-    const mods = await invoke('fetch_nexus_mods', {
-      apiKey: config.nexusApiKey || '',
-      query
-    });
-    renderNexusMods(mods);
-  } catch (err) {
-    container.innerHTML = `<div class="dl-placeholder error">Error: ${err}</div>`;
+    const installed = await invoke('is_ue4ss_installed', { exePath: path });
+    const installCard = $('btn-install-ue4ss-card');
+    const uninstallCard = $('btn-uninstall-ue4ss-card');
+    
+    if (installCard) installCard.style.display = installed ? 'none' : 'flex';
+    if (uninstallCard) uninstallCard.style.display = installed ? 'flex' : 'none';
+  } catch (e) {
+    console.error("Failed to check UE4SS status:", e);
   }
-}
-
-function renderNexusMods(mods) {
-  const container = $('nexus-catalogue');
-  container.innerHTML = '';
-
-  if (mods.length === 0) {
-    container.innerHTML = '<div class="dl-placeholder">No mods found on Nexus.</div>';
-    return;
-  }
-
-  mods.forEach(m => {
-    const el = document.createElement('div');
-    el.className = 'dl-item';
-
-    const info = document.createElement('div');
-    info.className = 'dl-info';
-    info.innerHTML = `
-      <div class="dl-name">${m.name}</div>
-      <div class="dl-meta">by ${m.author} // v${m.version}</div>
-    `;
-
-    const btn = document.createElement('button');
-    btn.className = 'dl-btn';
-    btn.innerText = 'Download';
-    btn.onclick = async () => {
-      btn.disabled = true;
-      btn.innerText = 'Installing...';
-      try {
-        const res = await invoke('download_nexus_mod', {
-          apiKey: config.nexusApiKey || '',
-          modId: m.mod_id,
-          storagePath: config.modsStoragePath
-        });
-        showToast(res, 'success');
-        btn.innerText = 'Installed';
-        refreshMods();
-      } catch (err) {
-        if (err === "PREMIUM_REQUIRED") {
-          currentPremiumModId = m.mod_id;
-          showModal('modal-premium');
-        } else {
-          showToast(err, 'error');
-        }
-        btn.disabled = false;
-        btn.innerText = 'Download';
-      }
-    };
-
-    el.appendChild(info);
-    el.appendChild(btn);
-    container.appendChild(el);
-  });
-}
-
-function setupUtilityEvents() {
-  $('btn-open-game-dir').addEventListener('click', async () => {
-    if (!config.exePath) return showToast("Game path not set! Go to Settings.", 'error');
-    try {
-      await invoke('open_game_root', { exePath: config.exePath });
-    } catch (err) {
-      showToast(`Failed to open folder: ${err}`, 'error');
-    }
-  });
-
-  $('btn-open-active-mods-dir').addEventListener('click', async () => {
-    if (!config.exePath) return showToast("Game path not set! Go to Settings.", 'error');
-    try {
-      await invoke('open_active_mods_folder', { exePath: config.exePath });
-    } catch (err) {
-      showToast(`Failed to open folder: ${err}`, 'error');
-    }
-  });
-
-  $('btn-open-storage-dir').addEventListener('click', async () => {
-    if (!config.modsStoragePath) return showToast("Storage path not set! Go to Settings.", 'error');
-    try {
-      await invoke('open_folder', { path: config.modsStoragePath });
-    } catch (err) {
-      showToast(`Failed to open folder: ${err}`, 'error');
-    }
-  });
-}
-
-function setupCustomSelects() {
-  const customSelect = $('theme-custom-select');
-  const trigger = $('theme-trigger');
-  const label = $('theme-current-label');
-  const optionsPanel = $('theme-options');
-  const nativeSelect = $('theme-select');
-
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    customSelect.classList.toggle('open');
-  });
-
-  optionsPanel.addEventListener('click', (e) => {
-    const opt = e.target.closest('.custom-option');
-    if (!opt) return;
-
-    const value = opt.dataset.value;
-    const text = opt.innerText;
-
-    label.innerText = text;
-    nativeSelect.value = value;
-    customSelect.classList.remove('open');
-
-    config.theme = value;
-    document.documentElement.setAttribute('data-theme', value);
-    saveConfig();
-
-    document.querySelectorAll('.custom-option').forEach(o => o.classList.toggle('selected', o === opt));
-  });
-
-  document.addEventListener('click', () => {
-    customSelect.classList.remove('open');
-  });
 }

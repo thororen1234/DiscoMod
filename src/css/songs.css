@@ -1,0 +1,66 @@
+.song-item {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--bg-panel); border: 1px solid transparent;
+  border-radius: var(--radius-sm); padding: 10px 16px;
+  transition: all var(--transition);
+}
+.song-item:hover { background: var(--bg-hover); }
+.song-info { flex: 1; min-width: 0; }
+.song-name { font-size: 14px; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.song-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.song-btn {
+  height: 36px; min-width: 60px;
+  padding: 0 12px; border-radius: var(--radius-sm); font-size: 12px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-main); transition: all var(--transition);
+  display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
+}
+.song-btn:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+.song-btn.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+.song-btn.accent:hover { background: var(--accent-hover); }
+.song-btn.danger:hover { color: var(--danger); border-color: transparent; background: var(--danger-dim); }
+.song-btn.playing { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.btn-play-song { 
+  font-size: 16px; 
+  width: 36px; 
+  height: 36px; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 0; 
+}
+
+.downloader-body { display: flex; flex-direction: column; gap: 16px; }
+.downloader-body .search-bar { display: flex; gap: 12px; width: 100%; }
+.downloader-body .search-input { flex: 1; max-width: none; height: 40px; font-size: 14px; padding: 0 16px; }
+.downloader-body .modal-btn { height: 40px; padding: 0 20px; font-size: 14px; }
+
+.dl-catalogue {
+  max-height: 550px; overflow-y: auto; overflow-x: hidden;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  padding-right: 4px;
+}
+.dl-placeholder { grid-column: span 2; text-align: center; padding: 40px; color: var(--text-dim); font-size: 14px; }
+.dl-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-dark); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  transition: all var(--transition);
+  min-width: 0;
+}
+.dl-item:hover { background: var(--bg-hover); border-color: var(--accent); }
+.dl-info { flex: 1; min-width: 0; }
+.dl-title, .dl-name { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+.dl-artist, .dl-meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-bpm { font-size: 11px; color: var(--accent); margin-top: 2px; font-weight: 600; }
+.dl-btn {
+  width: auto;
+  padding: 0 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700;
+  background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border);
+  white-space: nowrap; transition: all var(--transition);
+  height: 34px; display: inline-flex; align-items: center; justify-content: center;
+}
+.dl-btn:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+.dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }

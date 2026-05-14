@@ -1,5 +1,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ScannedItem {
+    pub name: String,
+    pub internal_path: String,
+}
 
 fn dirs_path() -> PathBuf {
     dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
